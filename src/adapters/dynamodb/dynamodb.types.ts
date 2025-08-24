@@ -1,4 +1,6 @@
-import { BaseRecord, DynamoDBKey, WithTimestamps, RecordWithTimestamps } from '../../shared/types';
+import { DynamoDBDocumentClient } from '@aws-sdk/lib-dynamodb';
+import { BaseRecord, DynamoDBKey, WithTimestamps, RecordWithTimestamps, Logger } from '../../shared/types';
+import { RecordValidator } from './dynamodb.validation';
 
 export interface DynamoDBAdapter<T extends BaseRecord = BaseRecord> {
   createOneRecord: (record: T & WithTimestamps) => Promise<T & RecordWithTimestamps>;
@@ -19,4 +21,11 @@ export interface DynamoDBClientDependencies {
   partitionKey: string;
   sortKey: string;
   gsiName: string;
+}
+
+export interface AdapterConfig<T extends BaseRecord = BaseRecord> {
+  client: DynamoDBDocumentClient;
+  deps: DynamoDBClientDependencies;
+  logger: Logger;
+  validator: RecordValidator<T>;
 }
