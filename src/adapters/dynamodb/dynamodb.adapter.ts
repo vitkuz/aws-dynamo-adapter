@@ -5,6 +5,7 @@ import {
   DeleteCommand,
   UpdateCommand,
   BatchWriteCommand,
+  BatchGetCommand,
   QueryCommand,
   ScanCommand,
 } from '@aws-sdk/lib-dynamodb';
@@ -67,6 +68,64 @@ const createFetchOneRecord = <T extends BaseRecord>(
   
   logger.info('Record fetched successfully', { tableName: deps.tableName, keys: validatedKeys });
   return result.Item as T & RecordWithTimestamps;
+};
+
+const createFetchManyRecords = <T extends BaseRecord>(
+  client: DynamoDBDocumentClient,
+  deps: DynamoDBClientDependencies,
+  logger: Logger,
+  validator: RecordValidator<T>
+) => async (keysList: DynamoDBKey[]): Promise<(T & RecordWithTimestamps)[]> => {
+  if (keysList.length === 0) {
+    logger.debug('No keys provided for batch fetch', { tableName: deps.tableName });
+    return [];
+  }
+  
+  const validatedKeysList = validator.validateBatchKeys(keysList);
+  logger.debug('Fetching multiple records by keys', { 
+    tableName: deps.tableName, 
+    count: validatedKeysList.length 
+  });
+  
+  const results: (T & RecordWithTimestamps)[] = [];
+  
+  // Split into batches of 100 (DynamoDB limit for BatchGetItem)
+  const batches = [];
+  for (let i = 0; i < validatedKeysList.length; i += 100) {
+    batches.push(validatedKeysList.slice(i, i + 100));
+  }
+  
+  for (const batch of batches) {
+    const response = await client.send(
+      new BatchGetCommand({
+        RequestItems: {
+          [deps.tableName]: {
+            Keys: batch,
+          },
+        },
+      })
+    );
+    
+    if (response.Responses && response.Responses[deps.tableName]) {
+      results.push(...(response.Responses[deps.tableName] as (T & RecordWithTimestamps)[]));
+    }
+    
+    // Handle unprocessed keys if any
+    if (response.UnprocessedKeys && response.UnprocessedKeys[deps.tableName]) {
+      logger.warn('Some keys were not processed', {
+        tableName: deps.tableName,
+        unprocessedCount: response.UnprocessedKeys[deps.tableName].Keys?.length || 0,
+      });
+    }
+  }
+  
+  logger.info('Multiple records fetched by keys', { 
+    tableName: deps.tableName, 
+    requested: validatedKeysList.length,
+    found: results.length 
+  });
+  
+  return results;
 };
 
 const createDeleteOneRecord = <T extends BaseRecord>(
@@ -407,6 +466,7 @@ export const createAdapter = <T extends BaseRecord = BaseRecord>(
     deleteManyRecords: createDeleteManyRecords<T>(client, deps, logger, validator),
     patchManyRecords: createPatchManyRecords<T>(client, deps, logger, validator),
     fetchOneRecord: createFetchOneRecord<T>(client, deps, logger, validator),
+    fetchManyRecords: createFetchManyRecords<T>(client, deps, logger, validator),
     fetchAllRecords: createFetchAllRecords<T>(client, deps, logger, validator),
     createFetchAllRecords: createCreateFetchAllRecords<T>(client, deps, logger, validator),
   };

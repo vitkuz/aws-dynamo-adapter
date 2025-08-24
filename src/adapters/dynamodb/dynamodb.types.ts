@@ -9,6 +9,7 @@ export interface DynamoDBAdapter<T extends BaseRecord = BaseRecord> {
   deleteManyRecords: (keysList: DynamoDBKey[]) => Promise<void>;
   patchManyRecords: (updates: Array<{ keys: DynamoDBKey; updates: Partial<T> }>) => Promise<(T & RecordWithTimestamps)[]>;
   fetchOneRecord: (keys: DynamoDBKey) => Promise<(T & RecordWithTimestamps) | null>;
+  fetchManyRecords: (keysList: DynamoDBKey[]) => Promise<(T & RecordWithTimestamps)[]>;
   fetchAllRecords: (sk: string) => Promise<T[]>;
   createFetchAllRecords: (index?: string, sk?: string) => () => Promise<T[]>;
 }
