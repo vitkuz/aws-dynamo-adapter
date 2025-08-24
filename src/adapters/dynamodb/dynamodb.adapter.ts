@@ -1,6 +1,7 @@
 import {
   DynamoDBDocumentClient,
   PutCommand,
+  GetCommand,
   DeleteCommand,
   UpdateCommand,
   BatchWriteCommand,
@@ -10,7 +11,6 @@ import {
 import { BaseRecord, DynamoDBAdapterConfig, DynamoDBKey, Logger, WithTimestamps, RecordWithTimestamps } from '../../shared/types';
 import { DynamoDBAdapter, DynamoDBClientDependencies } from './dynamodb.types';
 import {
-  addTimestamps,
   addTimestampsIfMissing,
   updateTimestamp,
   extractKeysFromRecord,
@@ -42,6 +42,31 @@ const createCreateOneRecord = <T extends BaseRecord>(
   });
   
   return recordWithTimestamps;
+};
+
+const createFetchOneRecord = <T extends BaseRecord>(
+  client: DynamoDBDocumentClient,
+  deps: DynamoDBClientDependencies,
+  logger: Logger,
+  validator: RecordValidator<T>
+) => async (keys: DynamoDBKey): Promise<(T & RecordWithTimestamps) | null> => {
+  const validatedKeys = validator.validateKeys(keys);
+  logger.debug('Fetching record', { tableName: deps.tableName, keys: validatedKeys });
+  
+  const result = await client.send(
+    new GetCommand({
+      TableName: deps.tableName,
+      Key: validatedKeys,
+    })
+  );
+  
+  if (!result.Item) {
+    logger.info('Record not found', { tableName: deps.tableName, keys: validatedKeys });
+    return null;
+  }
+  
+  logger.info('Record fetched successfully', { tableName: deps.tableName, keys: validatedKeys });
+  return result.Item as T & RecordWithTimestamps;
 };
 
 const createDeleteOneRecord = <T extends BaseRecord>(
@@ -381,6 +406,7 @@ export const createAdapter = <T extends BaseRecord = BaseRecord>(
     createManyRecords: createCreateManyRecords<T>(client, deps, logger, validator),
     deleteManyRecords: createDeleteManyRecords<T>(client, deps, logger, validator),
     patchManyRecords: createPatchManyRecords<T>(client, deps, logger, validator),
+    fetchOneRecord: createFetchOneRecord<T>(client, deps, logger, validator),
     fetchAllRecords: createFetchAllRecords<T>(client, deps, logger, validator),
     createFetchAllRecords: createCreateFetchAllRecords<T>(client, deps, logger, validator),
   };
