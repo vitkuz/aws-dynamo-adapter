@@ -1,12 +1,12 @@
 import { DeleteCommand } from '@aws-sdk/lib-dynamodb';
-import { BaseRecord, DynamoDBKey } from '../../../../shared/types';
+import { DynamoDBKey } from '../../../../shared/types';
 import { AdapterConfig } from '../../dynamodb.types';
 
 /**
  * Deletes a single record from DynamoDB
  */
-export const createDeleteOneRecord = <T extends BaseRecord>(
-  config: AdapterConfig<T>
+export const createDeleteOneRecord = (
+  config: AdapterConfig
 ) => async (keys: DynamoDBKey): Promise<void> => {
   const validatedKeys = config.validator.validateKeys(keys);
   

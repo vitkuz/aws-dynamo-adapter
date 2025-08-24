@@ -20,11 +20,7 @@ type Book = {
 async function testFetchManyRecords() {
   console.log('Testing fetchManyRecords...');
   
-  const authorAdapter = createAdapter<Author>({
-    tableName: TABLE_NAME,
-  });
-  
-  const bookAdapter = createAdapter<Book>({
+  const adapter = createAdapter({
     tableName: TABLE_NAME,
   });
   
@@ -78,13 +74,13 @@ async function testFetchManyRecords() {
   
   try {
     console.log('Creating test data...');
-    const createdAuthors = await authorAdapter.createManyRecords(authors);
-    const createdBooks = await bookAdapter.createManyRecords(books);
+    const createdAuthors = await adapter.createManyRecords<Author>(authors);
+    const createdBooks = await adapter.createManyRecords<Book>(books);
     console.log('✅ Test data created');
     
     console.log('\nTesting fetchManyRecords with all existing author keys...');
     const authorKeys = authorIds.map(id => ({ id, sk: 'authors' }));
-    const fetchedAuthors = await authorAdapter.fetchManyRecords(authorKeys);
+    const fetchedAuthors = await adapter.fetchManyRecords<Author>(authorKeys);
     
     if (fetchedAuthors.length !== 3) {
       throw new Error(`Expected 3 authors, got ${fetchedAuthors.length}`);
@@ -102,7 +98,7 @@ async function testFetchManyRecords() {
     
     console.log('\nTesting fetchManyRecords with all existing book keys...');
     const bookKeys = bookIds.map(id => ({ id, sk: 'books' }));
-    const fetchedBooks = await bookAdapter.fetchManyRecords(bookKeys);
+    const fetchedBooks = await adapter.fetchManyRecords<Book>(bookKeys);
     
     if (fetchedBooks.length !== 3) {
       throw new Error(`Expected 3 books, got ${fetchedBooks.length}`);
@@ -129,7 +125,7 @@ async function testFetchManyRecords() {
       { id: nonExistentId2, sk: 'authors' },
     ];
     
-    const mixedResults = await authorAdapter.fetchManyRecords(mixedKeys);
+    const mixedResults = await adapter.fetchManyRecords<Author>(mixedKeys);
     
     if (mixedResults.length !== 2) {
       throw new Error(`Expected 2 results for mixed keys, got ${mixedResults.length}`);
@@ -145,7 +141,7 @@ async function testFetchManyRecords() {
     console.log(`Requested: 4 keys, Found: ${mixedResults.length} records`);
     
     console.log('\nTesting fetchManyRecords with empty array...');
-    const emptyResults = await authorAdapter.fetchManyRecords([]);
+    const emptyResults = await adapter.fetchManyRecords<Author>([]);
     
     if (emptyResults.length !== 0) {
       throw new Error(`Expected empty array, got ${emptyResults.length} results`);
@@ -160,7 +156,7 @@ async function testFetchManyRecords() {
       ...Array.from({ length: 10 }, () => ({ id: generateId(), sk: 'authors' })),
     ];
     
-    const largeBatchResults = await authorAdapter.fetchManyRecords(largeKeySet);
+    const largeBatchResults = await adapter.fetchManyRecords<Author>(largeKeySet);
     
     // Should only find the 3 authors we created
     if (largeBatchResults.length !== 3) {
@@ -169,13 +165,13 @@ async function testFetchManyRecords() {
     console.log('✅ Large batch test passed');
     
     console.log('\nCleaning up test data...');
-    await authorAdapter.deleteManyRecords(authorKeys);
-    await bookAdapter.deleteManyRecords(bookKeys);
+    await adapter.deleteManyRecords(authorKeys);
+    await adapter.deleteManyRecords(bookKeys);
     console.log('✅ Cleanup completed');
     
     console.log('\nVerifying records were deleted...');
-    const deletedAuthors = await authorAdapter.fetchManyRecords(authorKeys);
-    const deletedBooks = await bookAdapter.fetchManyRecords(bookKeys);
+    const deletedAuthors = await adapter.fetchManyRecords<Author>(authorKeys);
+    const deletedBooks = await adapter.fetchManyRecords<Book>(bookKeys);
     
     if (deletedAuthors.length !== 0) {
       throw new Error('Authors should be deleted');
@@ -194,8 +190,8 @@ async function testFetchManyRecords() {
       const authorKeys = authorIds.map(id => ({ id, sk: 'authors' }));
       const bookKeys = bookIds.map(id => ({ id, sk: 'books' }));
       
-      await authorAdapter.deleteManyRecords(authorKeys).catch(() => {});
-      await bookAdapter.deleteManyRecords(bookKeys).catch(() => {});
+      await adapter.deleteManyRecords(authorKeys).catch(() => {});
+      await adapter.deleteManyRecords(bookKeys).catch(() => {});
       console.log('Cleanup attempted after error');
     } catch {}
     

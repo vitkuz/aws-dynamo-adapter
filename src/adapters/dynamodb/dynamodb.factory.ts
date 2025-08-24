@@ -1,4 +1,4 @@
-import { BaseRecord, DynamoDBAdapterConfig } from '../../shared/types';
+import { DynamoDBAdapterConfig } from '../../shared/types';
 import { DynamoDBAdapter, DynamoDBClientDependencies, AdapterConfig } from './dynamodb.types';
 import { mergeWithDefaults } from './dynamodb.config';
 import { createRecordValidator } from './dynamodb.validation';
@@ -20,9 +20,9 @@ import {
  * Factory function to create a DynamoDB adapter instance
  * Assembles all operations with shared configuration
  */
-export const createAdapter = <T extends BaseRecord = BaseRecord>(
+export const createAdapter = (
   adapterConfig: DynamoDBAdapterConfig
-): DynamoDBAdapter<T> => {
+): DynamoDBAdapter => {
   const mergedConfig = mergeWithDefaults(adapterConfig);
   const { client, logger, tableName, partitionKey, sortKey, gsiName } = mergedConfig;
   
@@ -33,9 +33,9 @@ export const createAdapter = <T extends BaseRecord = BaseRecord>(
     gsiName,
   };
   
-  const validator = createRecordValidator<T>(deps);
+  const validator = createRecordValidator(deps);
   
-  const config: AdapterConfig<T> = {
+  const config: AdapterConfig = {
     client,
     deps,
     logger,
@@ -46,20 +46,20 @@ export const createAdapter = <T extends BaseRecord = BaseRecord>(
   
   return {
     // Single operations
-    createOneRecord: createCreateOneRecord<T>(config),
-    fetchOneRecord: createFetchOneRecord<T>(config),
-    deleteOneRecord: createDeleteOneRecord<T>(config),
-    replaceOneRecord: createReplaceOneRecord<T>(config),
-    patchOneRecord: createPatchOneRecord<T>(config),
+    createOneRecord: createCreateOneRecord(config),
+    fetchOneRecord: createFetchOneRecord(config),
+    deleteOneRecord: createDeleteOneRecord(config),
+    replaceOneRecord: createReplaceOneRecord(config),
+    patchOneRecord: createPatchOneRecord(config),
     
     // Batch operations
-    createManyRecords: createCreateManyRecords<T>(config),
-    fetchManyRecords: createFetchManyRecords<T>(config),
-    deleteManyRecords: createDeleteManyRecords<T>(config),
-    patchManyRecords: createPatchManyRecords<T>(config),
+    createManyRecords: createCreateManyRecords(config),
+    fetchManyRecords: createFetchManyRecords(config),
+    deleteManyRecords: createDeleteManyRecords(config),
+    patchManyRecords: createPatchManyRecords(config),
     
     // Query operations
-    fetchAllRecords: createFetchAllRecords<T>(config),
-    createFetchAllRecords: createCreateFetchAllRecords<T>(config),
+    fetchAllRecords: createFetchAllRecords(config),
+    createFetchAllRecords: createCreateFetchAllRecords(config),
   };
 };

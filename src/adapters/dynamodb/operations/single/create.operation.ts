@@ -7,9 +7,9 @@ import { addTimestampsIfMissing, extractKeysFromRecord } from '../../dynamodb.ut
  * Creates a single record in DynamoDB
  * Automatically adds timestamps if not present
  */
-export const createCreateOneRecord = <T extends BaseRecord>(
-  config: AdapterConfig<T>
-) => async (record: T & WithTimestamps): Promise<T & RecordWithTimestamps> => {
+export const createCreateOneRecord = (
+  config: AdapterConfig
+) => async <T extends BaseRecord = BaseRecord>(record: T & WithTimestamps): Promise<T & RecordWithTimestamps> => {
   const validatedRecord = config.validator.validateCreateRecord(record);
   const recordWithTimestamps = addTimestampsIfMissing(validatedRecord);
   

@@ -2,18 +2,18 @@ import { DynamoDBDocumentClient } from '@aws-sdk/lib-dynamodb';
 import { BaseRecord, DynamoDBKey, WithTimestamps, RecordWithTimestamps, Logger } from '../../shared/types';
 import { RecordValidator } from './dynamodb.validation';
 
-export interface DynamoDBAdapter<T extends BaseRecord = BaseRecord> {
-  createOneRecord: (record: T & WithTimestamps) => Promise<T & RecordWithTimestamps>;
+export interface DynamoDBAdapter {
+  createOneRecord: <T extends BaseRecord = BaseRecord>(record: T & WithTimestamps) => Promise<T & RecordWithTimestamps>;
   deleteOneRecord: (keys: DynamoDBKey) => Promise<void>;
-  replaceOneRecord: (record: T & WithTimestamps) => Promise<T & RecordWithTimestamps>;
-  patchOneRecord: (keys: DynamoDBKey, updates: Partial<T>) => Promise<T & RecordWithTimestamps>;
-  createManyRecords: (records: (T & WithTimestamps)[]) => Promise<(T & RecordWithTimestamps)[]>;
+  replaceOneRecord: <T extends BaseRecord = BaseRecord>(record: T & WithTimestamps) => Promise<T & RecordWithTimestamps>;
+  patchOneRecord: <T extends BaseRecord = BaseRecord>(keys: DynamoDBKey, updates: Partial<T>) => Promise<T & RecordWithTimestamps>;
+  createManyRecords: <T extends BaseRecord = BaseRecord>(records: (T & WithTimestamps)[]) => Promise<(T & RecordWithTimestamps)[]>;
   deleteManyRecords: (keysList: DynamoDBKey[]) => Promise<void>;
-  patchManyRecords: (updates: Array<{ keys: DynamoDBKey; updates: Partial<T> }>) => Promise<(T & RecordWithTimestamps)[]>;
-  fetchOneRecord: (keys: DynamoDBKey) => Promise<(T & RecordWithTimestamps) | null>;
-  fetchManyRecords: (keysList: DynamoDBKey[]) => Promise<(T & RecordWithTimestamps)[]>;
-  fetchAllRecords: (sk: string) => Promise<T[]>;
-  createFetchAllRecords: (index?: string, sk?: string) => () => Promise<T[]>;
+  patchManyRecords: <T extends BaseRecord = BaseRecord>(updates: Array<{ keys: DynamoDBKey; updates: Partial<T> }>) => Promise<(T & RecordWithTimestamps)[]>;
+  fetchOneRecord: <T extends BaseRecord = BaseRecord>(keys: DynamoDBKey) => Promise<(T & RecordWithTimestamps) | null>;
+  fetchManyRecords: <T extends BaseRecord = BaseRecord>(keysList: DynamoDBKey[]) => Promise<(T & RecordWithTimestamps)[]>;
+  fetchAllRecords: <T extends BaseRecord = BaseRecord>(sk: string) => Promise<T[]>;
+  createFetchAllRecords: <T extends BaseRecord = BaseRecord>(index?: string, sk?: string) => () => Promise<T[]>;
 }
 
 export interface DynamoDBClientDependencies {
@@ -23,9 +23,9 @@ export interface DynamoDBClientDependencies {
   gsiName: string;
 }
 
-export interface AdapterConfig<T extends BaseRecord = BaseRecord> {
+export interface AdapterConfig {
   client: DynamoDBDocumentClient;
   deps: DynamoDBClientDependencies;
   logger: Logger;
-  validator: RecordValidator<T>;
+  validator: RecordValidator;
 }

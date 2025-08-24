@@ -6,9 +6,9 @@ import { AdapterConfig } from '../../dynamodb.types';
  * Factory function that creates a fetch function for all records
  * Can create either a query function (with sort key) or scan function (without)
  */
-export const createCreateFetchAllRecords = <T extends BaseRecord>(
-  config: AdapterConfig<T>
-) => (index: string = config.deps.gsiName, sk?: string) => async (): Promise<T[]> => {
+export const createCreateFetchAllRecords = (
+  config: AdapterConfig
+) => <T extends BaseRecord = BaseRecord>(index: string = config.deps.gsiName, sk?: string) => async (): Promise<T[]> => {
   if (sk) {
     config.logger.debug('Creating fetch function for specific sort key', { 
       tableName: config.deps.tableName, 

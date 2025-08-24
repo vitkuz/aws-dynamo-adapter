@@ -6,9 +6,9 @@ import { AdapterConfig } from '../../dynamodb.types';
  * Fetches all records with a specific sort key using GSI
  * Handles pagination automatically
  */
-export const createFetchAllRecords = <T extends BaseRecord>(
-  config: AdapterConfig<T>
-) => async (sk: string): Promise<T[]> => {
+export const createFetchAllRecords = (
+  config: AdapterConfig
+) => async <T extends BaseRecord = BaseRecord>(sk: string): Promise<T[]> => {
   config.logger.debug('Fetching all records by sort key', { 
     tableName: config.deps.tableName, 
     index: config.deps.gsiName, 

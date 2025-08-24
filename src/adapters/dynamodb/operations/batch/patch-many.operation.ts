@@ -6,9 +6,9 @@ import { createPatchOneRecord } from '../single/patch.operation';
  * Patches multiple records in DynamoDB
  * Uses parallel processing for optimal performance
  */
-export const createPatchManyRecords = <T extends BaseRecord>(
-  config: AdapterConfig<T>
-) => async (updates: Array<{ keys: DynamoDBKey; updates: Partial<T> }>): Promise<(T & RecordWithTimestamps)[]> => {
+export const createPatchManyRecords = (
+  config: AdapterConfig
+) => async <T extends BaseRecord = BaseRecord>(updates: Array<{ keys: DynamoDBKey; updates: Partial<T> }>): Promise<(T & RecordWithTimestamps)[]> => {
   const validatedUpdates = config.validator.validateBatchPatchUpdates(updates);
   
   config.logger.debug('Patching multiple records', { 
@@ -16,7 +16,7 @@ export const createPatchManyRecords = <T extends BaseRecord>(
     count: validatedUpdates.length 
   });
   
-  const patchOneRecord = createPatchOneRecord<T>(config);
+  const patchOneRecord = createPatchOneRecord(config);
   const results = await Promise.all(
     validatedUpdates.map(({ keys, updates }) => patchOneRecord(keys, updates))
   );

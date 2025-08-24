@@ -2,14 +2,14 @@ import { z, ZodError } from 'zod';
 import { BaseRecord, DynamoDBKey, WithTimestamps } from '../../shared/types';
 import { DynamoDBClientDependencies } from './dynamodb.types';
 
-export interface RecordValidator<T extends BaseRecord = BaseRecord> {
-  validateCreateRecord: (record: T & WithTimestamps) => T & WithTimestamps;
+export interface RecordValidator {
+  validateCreateRecord: <T extends BaseRecord = BaseRecord>(record: T & WithTimestamps) => T & WithTimestamps;
   validateKeys: (keys: DynamoDBKey) => DynamoDBKey;
-  validateUpdateRecord: (record: T & WithTimestamps) => T & WithTimestamps;
-  validateBatchRecords: (records: (T & WithTimestamps)[]) => (T & WithTimestamps)[];
+  validateUpdateRecord: <T extends BaseRecord = BaseRecord>(record: T & WithTimestamps) => T & WithTimestamps;
+  validateBatchRecords: <T extends BaseRecord = BaseRecord>(records: (T & WithTimestamps)[]) => (T & WithTimestamps)[];
   validateBatchKeys: (keysList: DynamoDBKey[]) => DynamoDBKey[];
-  validatePatchUpdates: (keys: DynamoDBKey, updates: Partial<T>) => { keys: DynamoDBKey; updates: Partial<T> };
-  validateBatchPatchUpdates: (updates: Array<{ keys: DynamoDBKey; updates: Partial<T> }>) => Array<{ keys: DynamoDBKey; updates: Partial<T> }>;
+  validatePatchUpdates: <T extends BaseRecord = BaseRecord>(keys: DynamoDBKey, updates: Partial<T>) => { keys: DynamoDBKey; updates: Partial<T> };
+  validateBatchPatchUpdates: <T extends BaseRecord = BaseRecord>(updates: Array<{ keys: DynamoDBKey; updates: Partial<T> }>) => Array<{ keys: DynamoDBKey; updates: Partial<T> }>;
 }
 
 // Factory to create dynamic Zod schema based on configuration
@@ -33,13 +33,13 @@ const createRecordSchema = (partitionKey: string, sortKey: string) => {
 };
 
 // Create validator instance
-export const createRecordValidator = <T extends BaseRecord = BaseRecord>(
+export const createRecordValidator = (
   deps: DynamoDBClientDependencies
-): RecordValidator<T> => {
+): RecordValidator => {
   const keySchema = createKeySchema(deps.partitionKey, deps.sortKey);
   const recordSchema = createRecordSchema(deps.partitionKey, deps.sortKey);
   
-  const validateCreateRecord = (record: T & WithTimestamps): T & WithTimestamps => {
+  const validateCreateRecord = <T extends BaseRecord = BaseRecord>(record: T & WithTimestamps): T & WithTimestamps => {
     try {
       const validated = recordSchema.parse(record);
       return validated as T & WithTimestamps;
@@ -72,7 +72,7 @@ export const createRecordValidator = <T extends BaseRecord = BaseRecord>(
     }
   };
   
-  const validateUpdateRecord = (record: T & WithTimestamps): T & WithTimestamps => {
+  const validateUpdateRecord = <T extends BaseRecord = BaseRecord>(record: T & WithTimestamps): T & WithTimestamps => {
     try {
       const validated = recordSchema.parse(record);
       return validated as T & WithTimestamps;
@@ -86,7 +86,7 @@ export const createRecordValidator = <T extends BaseRecord = BaseRecord>(
     }
   };
   
-  const validateBatchRecords = (records: (T & WithTimestamps)[]): (T & WithTimestamps)[] => {
+  const validateBatchRecords = <T extends BaseRecord = BaseRecord>(records: (T & WithTimestamps)[]): (T & WithTimestamps)[] => {
     return records.map((record, index) => {
       try {
         return validateCreateRecord(record);
@@ -112,7 +112,7 @@ export const createRecordValidator = <T extends BaseRecord = BaseRecord>(
     });
   };
   
-  const validatePatchUpdates = (keys: DynamoDBKey, updates: Partial<T>): { keys: DynamoDBKey; updates: Partial<T> } => {
+  const validatePatchUpdates = <T extends BaseRecord = BaseRecord>(keys: DynamoDBKey, updates: Partial<T>): { keys: DynamoDBKey; updates: Partial<T> } => {
     const validatedKeys = validateKeys(keys);
     
     // Ensure updates don't contain partition or sort keys
@@ -126,7 +126,7 @@ export const createRecordValidator = <T extends BaseRecord = BaseRecord>(
     };
   };
   
-  const validateBatchPatchUpdates = (updates: Array<{ keys: DynamoDBKey; updates: Partial<T> }>): Array<{ keys: DynamoDBKey; updates: Partial<T> }> => {
+  const validateBatchPatchUpdates = <T extends BaseRecord = BaseRecord>(updates: Array<{ keys: DynamoDBKey; updates: Partial<T> }>): Array<{ keys: DynamoDBKey; updates: Partial<T> }> => {
     return updates.map((update, index) => {
       try {
         return validatePatchUpdates(update.keys, update.updates);

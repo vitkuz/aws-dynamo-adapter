@@ -8,9 +8,9 @@ import { DYNAMODB_BATCH_WRITE_LIMIT } from '../../dynamodb.constants';
  * Creates multiple records in DynamoDB using batch write
  * Automatically splits into batches of 25 items (DynamoDB limit)
  */
-export const createCreateManyRecords = <T extends BaseRecord>(
-  config: AdapterConfig<T>
-) => async (records: (T & WithTimestamps)[]): Promise<(T & RecordWithTimestamps)[]> => {
+export const createCreateManyRecords = (
+  config: AdapterConfig
+) => async <T extends BaseRecord = BaseRecord>(records: (T & WithTimestamps)[]): Promise<(T & RecordWithTimestamps)[]> => {
   const validatedRecords = config.validator.validateBatchRecords(records);
   const recordsWithTimestamps = validatedRecords.map(record => addTimestampsIfMissing(record));
   
