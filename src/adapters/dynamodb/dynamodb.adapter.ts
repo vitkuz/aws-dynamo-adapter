@@ -7,7 +7,7 @@ import {
   QueryCommand,
   ScanCommand,
 } from '@aws-sdk/lib-dynamodb';
-import { BaseRecord, DynamoDBAdapterConfig, DynamoDBKey, Logger } from '../../shared/types';
+import { BaseRecord, DynamoDBAdapterConfig, DynamoDBKey, Logger, WithTimestamps, RecordWithTimestamps } from '../../shared/types';
 import { DynamoDBAdapter, DynamoDBClientDependencies } from './dynamodb.types';
 import {
   addTimestamps,
@@ -23,9 +23,9 @@ const createCreateOneRecord = <T extends BaseRecord>(
   deps: DynamoDBClientDependencies,
   logger: Logger,
   validator: RecordValidator<T>
-) => async (record: Partial<Pick<T, 'createdAt' | 'updatedAt'>> & Omit<T, 'createdAt' | 'updatedAt'>): Promise<T> => {
+) => async (record: T & WithTimestamps): Promise<T & RecordWithTimestamps> => {
   const validatedRecord = validator.validateCreateRecord(record);
-  const recordWithTimestamps = addTimestampsIfMissing(validatedRecord) as T;
+  const recordWithTimestamps = addTimestampsIfMissing(validatedRecord);
   
   logger.debug('Creating record', { tableName: deps.tableName, record: recordWithTimestamps });
   
@@ -68,9 +68,9 @@ const createReplaceOneRecord = <T extends BaseRecord>(
   deps: DynamoDBClientDependencies,
   logger: Logger,
   validator: RecordValidator<T>
-) => async (record: T): Promise<T> => {
+) => async (record: T & WithTimestamps): Promise<T & RecordWithTimestamps> => {
   const validatedRecord = validator.validateUpdateRecord(record);
-  const updatedRecord = updateTimestamp(validatedRecord) as T;
+  const updatedRecord = updateTimestamp(validatedRecord) as T & RecordWithTimestamps;
   
   logger.debug('Replacing record', { tableName: deps.tableName, record: updatedRecord });
   
@@ -94,7 +94,7 @@ const createPatchOneRecord = <T extends BaseRecord>(
   deps: DynamoDBClientDependencies,
   logger: Logger,
   validator: RecordValidator<T>
-) => async (keys: DynamoDBKey, updates: Partial<T>): Promise<T> => {
+) => async (keys: DynamoDBKey, updates: Partial<T>): Promise<T & RecordWithTimestamps> => {
   const { keys: validatedKeys, updates: validatedUpdates } = validator.validatePatchUpdates(keys, updates);
   const updatesWithTimestamp = updateTimestamp(validatedUpdates);
   
@@ -130,7 +130,7 @@ const createPatchOneRecord = <T extends BaseRecord>(
   
   logger.info('Record patched successfully', { tableName: deps.tableName, keys: validatedKeys });
   
-  return result.Attributes as T;
+  return result.Attributes as T & RecordWithTimestamps;
 };
 
 const createCreateManyRecords = <T extends BaseRecord>(
@@ -138,9 +138,9 @@ const createCreateManyRecords = <T extends BaseRecord>(
   deps: DynamoDBClientDependencies,
   logger: Logger,
   validator: RecordValidator<T>
-) => async (records: (Partial<Pick<T, 'createdAt' | 'updatedAt'>> & Omit<T, 'createdAt' | 'updatedAt'>)[]): Promise<T[]> => {
+) => async (records: (T & WithTimestamps)[]): Promise<(T & RecordWithTimestamps)[]> => {
   const validatedRecords = validator.validateBatchRecords(records);
-  const recordsWithTimestamps = validatedRecords.map(record => addTimestampsIfMissing(record) as T);
+  const recordsWithTimestamps = validatedRecords.map(record => addTimestampsIfMissing(record));
   
   logger.debug('Creating multiple records', { tableName: deps.tableName, count: validatedRecords.length });
   
@@ -212,7 +212,7 @@ const createPatchManyRecords = <T extends BaseRecord>(
   deps: DynamoDBClientDependencies,
   logger: Logger,
   validator: RecordValidator<T>
-) => async (updates: Array<{ keys: DynamoDBKey; updates: Partial<T> }>): Promise<T[]> => {
+) => async (updates: Array<{ keys: DynamoDBKey; updates: Partial<T> }>): Promise<(T & RecordWithTimestamps)[]> => {
   const validatedUpdates = validator.validateBatchPatchUpdates(updates);
   logger.debug('Patching multiple records', { tableName: deps.tableName, count: validatedUpdates.length });
   

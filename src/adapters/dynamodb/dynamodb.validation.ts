@@ -1,12 +1,12 @@
 import { z, ZodError } from 'zod';
-import { BaseRecord, DynamoDBKey } from '../../shared/types';
+import { BaseRecord, DynamoDBKey, WithTimestamps } from '../../shared/types';
 import { DynamoDBClientDependencies } from './dynamodb.types';
 
 export interface RecordValidator<T extends BaseRecord = BaseRecord> {
-  validateCreateRecord: (record: Partial<Pick<T, 'createdAt' | 'updatedAt'>> & Omit<T, 'createdAt' | 'updatedAt'>) => Partial<Pick<T, 'createdAt' | 'updatedAt'>> & Omit<T, 'createdAt' | 'updatedAt'>;
+  validateCreateRecord: (record: T & WithTimestamps) => T & WithTimestamps;
   validateKeys: (keys: DynamoDBKey) => DynamoDBKey;
-  validateUpdateRecord: (record: T) => T;
-  validateBatchRecords: (records: (Partial<Pick<T, 'createdAt' | 'updatedAt'>> & Omit<T, 'createdAt' | 'updatedAt'>)[]) => (Partial<Pick<T, 'createdAt' | 'updatedAt'>> & Omit<T, 'createdAt' | 'updatedAt'>)[];
+  validateUpdateRecord: (record: T & WithTimestamps) => T & WithTimestamps;
+  validateBatchRecords: (records: (T & WithTimestamps)[]) => (T & WithTimestamps)[];
   validateBatchKeys: (keysList: DynamoDBKey[]) => DynamoDBKey[];
   validatePatchUpdates: (keys: DynamoDBKey, updates: Partial<T>) => { keys: DynamoDBKey; updates: Partial<T> };
   validateBatchPatchUpdates: (updates: Array<{ keys: DynamoDBKey; updates: Partial<T> }>) => Array<{ keys: DynamoDBKey; updates: Partial<T> }>;
@@ -39,10 +39,10 @@ export const createRecordValidator = <T extends BaseRecord = BaseRecord>(
   const keySchema = createKeySchema(deps.partitionKey, deps.sortKey);
   const recordSchema = createRecordSchema(deps.partitionKey, deps.sortKey);
   
-  const validateCreateRecord = (record: Partial<Pick<T, 'createdAt' | 'updatedAt'>> & Omit<T, 'createdAt' | 'updatedAt'>): Partial<Pick<T, 'createdAt' | 'updatedAt'>> & Omit<T, 'createdAt' | 'updatedAt'> => {
+  const validateCreateRecord = (record: T & WithTimestamps): T & WithTimestamps => {
     try {
       const validated = recordSchema.parse(record);
-      return validated as Partial<Pick<T, 'createdAt' | 'updatedAt'>> & Omit<T, 'createdAt' | 'updatedAt'>;
+      return validated as T & WithTimestamps;
     } catch (error) {
       if (error instanceof ZodError) {
         const issues = error.issues || [];
@@ -72,10 +72,10 @@ export const createRecordValidator = <T extends BaseRecord = BaseRecord>(
     }
   };
   
-  const validateUpdateRecord = (record: T): T => {
+  const validateUpdateRecord = (record: T & WithTimestamps): T & WithTimestamps => {
     try {
       const validated = recordSchema.parse(record);
-      return validated as T;
+      return validated as T & WithTimestamps;
     } catch (error) {
       if (error instanceof ZodError) {
         const issues = error.issues || [];
@@ -86,7 +86,7 @@ export const createRecordValidator = <T extends BaseRecord = BaseRecord>(
     }
   };
   
-  const validateBatchRecords = (records: (Partial<Pick<T, 'createdAt' | 'updatedAt'>> & Omit<T, 'createdAt' | 'updatedAt'>)[]): (Partial<Pick<T, 'createdAt' | 'updatedAt'>> & Omit<T, 'createdAt' | 'updatedAt'>)[] => {
+  const validateBatchRecords = (records: (T & WithTimestamps)[]): (T & WithTimestamps)[] => {
     return records.map((record, index) => {
       try {
         return validateCreateRecord(record);

@@ -1,9 +1,16 @@
 import type { DynamoDBDocumentClient } from '@aws-sdk/lib-dynamodb';
 
-export interface BaseRecord {
-  createdAt: string;
-  updatedAt: string;
+// BaseRecord can be any object - users define their own shape
+export type BaseRecord = Record<string, any>;
+
+// Optional interface for records with timestamps
+export interface WithTimestamps {
+  createdAt?: string;
+  updatedAt?: string;
 }
+
+// Helper type for records that include timestamps
+export type RecordWithTimestamps<T extends BaseRecord = BaseRecord> = T & Required<WithTimestamps>;
 
 export interface Logger {
   debug: (message: string, ...args: unknown[]) => void;

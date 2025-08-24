@@ -1,11 +1,11 @@
 import { v4 as uuidv4 } from 'uuid';
-import { BaseRecord } from '../../shared/types';
+import { BaseRecord, WithTimestamps, RecordWithTimestamps } from '../../shared/types';
 
 export const generateId = (): string => uuidv4();
 
 export const getCurrentTimestamp = (): string => new Date().toISOString();
 
-export const addTimestamps = <T>(record: T): T & BaseRecord => {
+export const addTimestamps = <T extends BaseRecord>(record: T): T & RecordWithTimestamps => {
   const timestamp = getCurrentTimestamp();
   return {
     ...record,
@@ -14,16 +14,16 @@ export const addTimestamps = <T>(record: T): T & BaseRecord => {
   };
 };
 
-export const addTimestampsIfMissing = <T>(record: T & Partial<BaseRecord>): T & BaseRecord => {
+export const addTimestampsIfMissing = <T extends BaseRecord>(record: T & WithTimestamps): T & RecordWithTimestamps => {
   const timestamp = getCurrentTimestamp();
   return {
     ...record,
     createdAt: record.createdAt || timestamp,
     updatedAt: record.updatedAt || timestamp,
-  } as T & BaseRecord;
+  } as T & RecordWithTimestamps;
 };
 
-export const updateTimestamp = <T>(record: T): T & Pick<BaseRecord, 'updatedAt'> => ({
+export const updateTimestamp = <T extends BaseRecord>(record: T & WithTimestamps): T & { updatedAt: string } => ({
   ...record,
   updatedAt: getCurrentTimestamp(),
 });

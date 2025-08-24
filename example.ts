@@ -1,12 +1,15 @@
-import { createAdapter, BaseRecord } from './src';
+import { createAdapter } from './src';
 
-// Define your entity type
-interface Product extends BaseRecord {
+// Define your entity type - no need to extend BaseRecord
+interface Product {
   id: string;
   sk: string;
   name: string;
   price: number;
   category?: string;
+  // Optional: include timestamps if you want to provide them
+  createdAt?: string;
+  updatedAt?: string;
 }
 
 async function example() {

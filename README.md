@@ -5,11 +5,14 @@ Type-safe DynamoDB adapter with configurable keys and comprehensive operations.
 ## Features
 
 - ✅ Full TypeScript support with generics
+- ✅ Flexible type system - use any object shape
 - ✅ Configurable partition and sort keys
 - ✅ Automatic timestamp management (createdAt/updatedAt)
+- ✅ Optional timestamp preservation
 - ✅ Batch operations support
 - ✅ Global Secondary Index support
-- ✅ Custom logger support
+- ✅ AWS region configuration
+- ✅ Custom client and logger support
 - ✅ ESM and CommonJS compatibility
 
 ## Installation
