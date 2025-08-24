@@ -19,6 +19,8 @@
     "build:types": "tsc -p tsconfig.types.json",
     "clean": "rimraf dist",
     "test": "tsx src/tests/integration.test.ts",
+    "test:create": "tsx src/tests/create-one-record.test.ts",
+    "test:fetch": "tsx src/tests/fetch-one-record.test.ts",
     "setup:db": "tsx scripts/setup-db.ts",
     "teardown:db": "tsx scripts/teardown-db.ts"
   },
