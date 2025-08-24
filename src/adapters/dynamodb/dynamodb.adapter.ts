@@ -10,7 +10,7 @@ import {
   ScanCommand,
 } from '@aws-sdk/lib-dynamodb';
 import { BaseRecord, DynamoDBAdapterConfig, DynamoDBKey, Logger, WithTimestamps, RecordWithTimestamps } from '../../shared/types';
-import { DynamoDBAdapter, DynamoDBClientDependencies } from './dynamodb.types';
+import { DynamoDBAdapter, DynamoDBClientDependencies, AdapterConfig } from './dynamodb.types';
 import {
   addTimestampsIfMissing,
   updateTimestamp,
@@ -20,70 +20,61 @@ import { mergeWithDefaults } from './dynamodb.config';
 import { RecordValidator, createRecordValidator } from './dynamodb.validation';
 
 const createCreateOneRecord = <T extends BaseRecord>(
-  client: DynamoDBDocumentClient,
-  deps: DynamoDBClientDependencies,
-  logger: Logger,
-  validator: RecordValidator<T>
+  config: AdapterConfig<T>
 ) => async (record: T & WithTimestamps): Promise<T & RecordWithTimestamps> => {
-  const validatedRecord = validator.validateCreateRecord(record);
+  const validatedRecord = config.validator.validateCreateRecord(record);
   const recordWithTimestamps = addTimestampsIfMissing(validatedRecord);
   
-  logger.debug('Creating record', { tableName: deps.tableName, record: recordWithTimestamps });
+  config.logger.debug('Creating record', { tableName: config.deps.tableName, record: recordWithTimestamps });
   
-  await client.send(
+  await config.client.send(
     new PutCommand({
-      TableName: deps.tableName,
+      TableName: config.deps.tableName,
       Item: recordWithTimestamps,
     })
   );
   
-  logger.info('Record created successfully', { 
-    tableName: deps.tableName,
-    keys: extractKeysFromRecord(recordWithTimestamps, deps.partitionKey, deps.sortKey)
+  config.logger.info('Record created successfully', { 
+    tableName: config.deps.tableName,
+    keys: extractKeysFromRecord(recordWithTimestamps, config.deps.partitionKey, config.deps.sortKey)
   });
   
   return recordWithTimestamps;
 };
 
 const createFetchOneRecord = <T extends BaseRecord>(
-  client: DynamoDBDocumentClient,
-  deps: DynamoDBClientDependencies,
-  logger: Logger,
-  validator: RecordValidator<T>
+  config: AdapterConfig<T>
 ) => async (keys: DynamoDBKey): Promise<(T & RecordWithTimestamps) | null> => {
-  const validatedKeys = validator.validateKeys(keys);
-  logger.debug('Fetching record', { tableName: deps.tableName, keys: validatedKeys });
+  const validatedKeys = config.validator.validateKeys(keys);
+  config.logger.debug('Fetching record', { tableName: config.deps.tableName, keys: validatedKeys });
   
-  const result = await client.send(
+  const result = await config.client.send(
     new GetCommand({
-      TableName: deps.tableName,
+      TableName: config.deps.tableName,
       Key: validatedKeys,
     })
   );
   
   if (!result.Item) {
-    logger.info('Record not found', { tableName: deps.tableName, keys: validatedKeys });
+    config.logger.info('Record not found', { tableName: config.deps.tableName, keys: validatedKeys });
     return null;
   }
   
-  logger.info('Record fetched successfully', { tableName: deps.tableName, keys: validatedKeys });
+  config.logger.info('Record fetched successfully', { tableName: config.deps.tableName, keys: validatedKeys });
   return result.Item as T & RecordWithTimestamps;
 };
 
 const createFetchManyRecords = <T extends BaseRecord>(
-  client: DynamoDBDocumentClient,
-  deps: DynamoDBClientDependencies,
-  logger: Logger,
-  validator: RecordValidator<T>
+  config: AdapterConfig<T>
 ) => async (keysList: DynamoDBKey[]): Promise<(T & RecordWithTimestamps)[]> => {
   if (keysList.length === 0) {
-    logger.debug('No keys provided for batch fetch', { tableName: deps.tableName });
+    config.logger.debug('No keys provided for batch fetch', { tableName: config.deps.tableName });
     return [];
   }
   
-  const validatedKeysList = validator.validateBatchKeys(keysList);
-  logger.debug('Fetching multiple records by keys', { 
-    tableName: deps.tableName, 
+  const validatedKeysList = config.validator.validateBatchKeys(keysList);
+  config.logger.debug('Fetching multiple records by keys', { 
+    tableName: config.deps.tableName, 
     count: validatedKeysList.length 
   });
   
@@ -96,31 +87,31 @@ const createFetchManyRecords = <T extends BaseRecord>(
   }
   
   for (const batch of batches) {
-    const response = await client.send(
+    const response = await config.client.send(
       new BatchGetCommand({
         RequestItems: {
-          [deps.tableName]: {
+          [config.deps.tableName]: {
             Keys: batch,
           },
         },
       })
     );
     
-    if (response.Responses && response.Responses[deps.tableName]) {
-      results.push(...(response.Responses[deps.tableName] as (T & RecordWithTimestamps)[]));
+    if (response.Responses && response.Responses[config.deps.tableName]) {
+      results.push(...(response.Responses[config.deps.tableName] as (T & RecordWithTimestamps)[]));
     }
     
     // Handle unprocessed keys if any
-    if (response.UnprocessedKeys && response.UnprocessedKeys[deps.tableName]) {
-      logger.warn('Some keys were not processed', {
-        tableName: deps.tableName,
-        unprocessedCount: response.UnprocessedKeys[deps.tableName].Keys?.length || 0,
+    if (response.UnprocessedKeys && response.UnprocessedKeys[config.deps.tableName]) {
+      config.logger.warn('Some keys were not processed', {
+        tableName: config.deps.tableName,
+        unprocessedCount: response.UnprocessedKeys[config.deps.tableName].Keys?.length || 0,
       });
     }
   }
   
-  logger.info('Multiple records fetched by keys', { 
-    tableName: deps.tableName, 
+  config.logger.info('Multiple records fetched by keys', { 
+    tableName: config.deps.tableName, 
     requested: validatedKeysList.length,
     found: results.length 
   });
@@ -129,57 +120,48 @@ const createFetchManyRecords = <T extends BaseRecord>(
 };
 
 const createDeleteOneRecord = <T extends BaseRecord>(
-  client: DynamoDBDocumentClient,
-  deps: DynamoDBClientDependencies,
-  logger: Logger,
-  validator: RecordValidator<T>
+  config: AdapterConfig<T>
 ) => async (keys: DynamoDBKey): Promise<void> => {
-  const validatedKeys = validator.validateKeys(keys);
-  logger.debug('Deleting record', { tableName: deps.tableName, keys: validatedKeys });
+  const validatedKeys = config.validator.validateKeys(keys);
+  config.logger.debug('Deleting record', { tableName: config.deps.tableName, keys: validatedKeys });
   
-  await client.send(
+  await config.client.send(
     new DeleteCommand({
-      TableName: deps.tableName,
+      TableName: config.deps.tableName,
       Key: validatedKeys,
     })
   );
   
-  logger.info('Record deleted successfully', { tableName: deps.tableName, keys: validatedKeys });
+  config.logger.info('Record deleted successfully', { tableName: config.deps.tableName, keys: validatedKeys });
 };
 
 const createReplaceOneRecord = <T extends BaseRecord>(
-  client: DynamoDBDocumentClient,
-  deps: DynamoDBClientDependencies,
-  logger: Logger,
-  validator: RecordValidator<T>
+  config: AdapterConfig<T>
 ) => async (record: T & WithTimestamps): Promise<T & RecordWithTimestamps> => {
-  const validatedRecord = validator.validateUpdateRecord(record);
+  const validatedRecord = config.validator.validateUpdateRecord(record);
   const updatedRecord = updateTimestamp(validatedRecord) as T & RecordWithTimestamps;
   
-  logger.debug('Replacing record', { tableName: deps.tableName, record: updatedRecord });
+  config.logger.debug('Replacing record', { tableName: config.deps.tableName, record: updatedRecord });
   
-  await client.send(
+  await config.client.send(
     new PutCommand({
-      TableName: deps.tableName,
+      TableName: config.deps.tableName,
       Item: updatedRecord,
     })
   );
   
-  logger.info('Record replaced successfully', {
-    tableName: deps.tableName,
-    keys: extractKeysFromRecord(updatedRecord, deps.partitionKey, deps.sortKey)
+  config.logger.info('Record replaced successfully', {
+    tableName: config.deps.tableName,
+    keys: extractKeysFromRecord(updatedRecord, config.deps.partitionKey, config.deps.sortKey)
   });
   
   return updatedRecord;
 };
 
 const createPatchOneRecord = <T extends BaseRecord>(
-  client: DynamoDBDocumentClient,
-  deps: DynamoDBClientDependencies,
-  logger: Logger,
-  validator: RecordValidator<T>
+  config: AdapterConfig<T>
 ) => async (keys: DynamoDBKey, updates: Partial<T>): Promise<T & RecordWithTimestamps> => {
-  const { keys: validatedKeys, updates: validatedUpdates } = validator.validatePatchUpdates(keys, updates);
+  const { keys: validatedKeys, updates: validatedUpdates } = config.validator.validatePatchUpdates(keys, updates);
   const updatesWithTimestamp = updateTimestamp(validatedUpdates);
   
   const updateExpressionParts: string[] = [];
@@ -199,11 +181,11 @@ const createPatchOneRecord = <T extends BaseRecord>(
   
   const updateExpression = `SET ${updateExpressionParts.join(', ')}`;
   
-  logger.debug('Patching record', { tableName: deps.tableName, keys: validatedKeys, updates: updatesWithTimestamp });
+  config.logger.debug('Patching record', { tableName: config.deps.tableName, keys: validatedKeys, updates: updatesWithTimestamp });
   
-  const result = await client.send(
+  const result = await config.client.send(
     new UpdateCommand({
-      TableName: deps.tableName,
+      TableName: config.deps.tableName,
       Key: validatedKeys,
       UpdateExpression: updateExpression,
       ExpressionAttributeNames: expressionAttributeNames,
@@ -212,21 +194,18 @@ const createPatchOneRecord = <T extends BaseRecord>(
     })
   );
   
-  logger.info('Record patched successfully', { tableName: deps.tableName, keys: validatedKeys });
+  config.logger.info('Record patched successfully', { tableName: config.deps.tableName, keys: validatedKeys });
   
   return result.Attributes as T & RecordWithTimestamps;
 };
 
 const createCreateManyRecords = <T extends BaseRecord>(
-  client: DynamoDBDocumentClient,
-  deps: DynamoDBClientDependencies,
-  logger: Logger,
-  validator: RecordValidator<T>
+  config: AdapterConfig<T>
 ) => async (records: (T & WithTimestamps)[]): Promise<(T & RecordWithTimestamps)[]> => {
-  const validatedRecords = validator.validateBatchRecords(records);
+  const validatedRecords = config.validator.validateBatchRecords(records);
   const recordsWithTimestamps = validatedRecords.map(record => addTimestampsIfMissing(record));
   
-  logger.debug('Creating multiple records', { tableName: deps.tableName, count: validatedRecords.length });
+  config.logger.debug('Creating multiple records', { tableName: config.deps.tableName, count: validatedRecords.length });
   
   // Split into batches of 25 (DynamoDB limit)
   const batches = [];
@@ -239,17 +218,17 @@ const createCreateManyRecords = <T extends BaseRecord>(
       PutRequest: { Item: item }
     }));
     
-    await client.send(
+    await config.client.send(
       new BatchWriteCommand({
         RequestItems: {
-          [deps.tableName]: putRequests,
+          [config.deps.tableName]: putRequests,
         },
       })
     );
   }
   
-  logger.info('Multiple records created successfully', { 
-    tableName: deps.tableName, 
+  config.logger.info('Multiple records created successfully', { 
+    tableName: config.deps.tableName, 
     count: recordsWithTimestamps.length 
   });
   
@@ -257,13 +236,10 @@ const createCreateManyRecords = <T extends BaseRecord>(
 };
 
 const createDeleteManyRecords = <T extends BaseRecord>(
-  client: DynamoDBDocumentClient,
-  deps: DynamoDBClientDependencies,
-  logger: Logger,
-  validator: RecordValidator<T>
+  config: AdapterConfig<T>
 ) => async (keysList: DynamoDBKey[]): Promise<void> => {
-  const validatedKeysList = validator.validateBatchKeys(keysList);
-  logger.debug('Deleting multiple records', { tableName: deps.tableName, count: validatedKeysList.length });
+  const validatedKeysList = config.validator.validateBatchKeys(keysList);
+  config.logger.debug('Deleting multiple records', { tableName: config.deps.tableName, count: validatedKeysList.length });
   
   // Split into batches of 25 (DynamoDB limit)
   const batches = [];
@@ -276,37 +252,34 @@ const createDeleteManyRecords = <T extends BaseRecord>(
       DeleteRequest: { Key: keys }
     }));
     
-    await client.send(
+    await config.client.send(
       new BatchWriteCommand({
         RequestItems: {
-          [deps.tableName]: deleteRequests,
+          [config.deps.tableName]: deleteRequests,
         },
       })
     );
   }
   
-  logger.info('Multiple records deleted successfully', { 
-    tableName: deps.tableName, 
+  config.logger.info('Multiple records deleted successfully', { 
+    tableName: config.deps.tableName, 
     count: validatedKeysList.length 
   });
 };
 
 const createPatchManyRecords = <T extends BaseRecord>(
-  client: DynamoDBDocumentClient,
-  deps: DynamoDBClientDependencies,
-  logger: Logger,
-  validator: RecordValidator<T>
+  config: AdapterConfig<T>
 ) => async (updates: Array<{ keys: DynamoDBKey; updates: Partial<T> }>): Promise<(T & RecordWithTimestamps)[]> => {
-  const validatedUpdates = validator.validateBatchPatchUpdates(updates);
-  logger.debug('Patching multiple records', { tableName: deps.tableName, count: validatedUpdates.length });
+  const validatedUpdates = config.validator.validateBatchPatchUpdates(updates);
+  config.logger.debug('Patching multiple records', { tableName: config.deps.tableName, count: validatedUpdates.length });
   
-  const patchOneRecord = createPatchOneRecord<T>(client, deps, logger, validator);
+  const patchOneRecord = createPatchOneRecord<T>(config);
   const results = await Promise.all(
     validatedUpdates.map(({ keys, updates }) => patchOneRecord(keys, updates))
   );
   
-  logger.info('Multiple records patched successfully', { 
-    tableName: deps.tableName, 
+  config.logger.info('Multiple records patched successfully', { 
+    tableName: config.deps.tableName, 
     count: results.length 
   });
   
@@ -314,14 +287,11 @@ const createPatchManyRecords = <T extends BaseRecord>(
 };
 
 const createFetchAllRecords = <T extends BaseRecord>(
-  client: DynamoDBDocumentClient,
-  deps: DynamoDBClientDependencies,
-  logger: Logger,
-  validator: RecordValidator<T>
+  config: AdapterConfig<T>
 ) => async (sk: string): Promise<T[]> => {
-  logger.debug('Fetching all records by sort key', { 
-    tableName: deps.tableName, 
-    index: deps.gsiName, 
+  config.logger.debug('Fetching all records by sort key', { 
+    tableName: config.deps.tableName, 
+    index: config.deps.gsiName, 
     sk 
   });
   
@@ -329,13 +299,13 @@ const createFetchAllRecords = <T extends BaseRecord>(
   let lastEvaluatedKey: Record<string, any> | undefined;
   
   do {
-    const result = await client.send(
+    const result = await config.client.send(
       new QueryCommand({
-        TableName: deps.tableName,
-        IndexName: deps.gsiName,
+        TableName: config.deps.tableName,
+        IndexName: config.deps.gsiName,
         KeyConditionExpression: '#sk = :sk',
         ExpressionAttributeNames: {
-          '#sk': deps.sortKey,
+          '#sk': config.deps.sortKey,
         },
         ExpressionAttributeValues: {
           ':sk': sk,
@@ -351,9 +321,9 @@ const createFetchAllRecords = <T extends BaseRecord>(
     lastEvaluatedKey = result.LastEvaluatedKey;
   } while (lastEvaluatedKey);
   
-  logger.info('Records fetched successfully', { 
-    tableName: deps.tableName, 
-    index: deps.gsiName, 
+  config.logger.info('Records fetched successfully', { 
+    tableName: config.deps.tableName, 
+    index: config.deps.gsiName, 
     sk, 
     count: items.length 
   });
@@ -362,14 +332,11 @@ const createFetchAllRecords = <T extends BaseRecord>(
 };
 
 const createCreateFetchAllRecords = <T extends BaseRecord>(
-  client: DynamoDBDocumentClient,
-  deps: DynamoDBClientDependencies,
-  logger: Logger,
-  validator: RecordValidator<T>
-) => (index: string = deps.gsiName, sk?: string) => async (): Promise<T[]> => {
+  config: AdapterConfig<T>
+) => (index: string = config.deps.gsiName, sk?: string) => async (): Promise<T[]> => {
   if (sk) {
-    logger.debug('Creating fetch function for specific sort key', { 
-      tableName: deps.tableName, 
+    config.logger.debug('Creating fetch function for specific sort key', { 
+      tableName: config.deps.tableName, 
       index, 
       sk 
     });
@@ -378,13 +345,13 @@ const createCreateFetchAllRecords = <T extends BaseRecord>(
     let lastEvaluatedKey: Record<string, any> | undefined;
     
     do {
-      const result = await client.send(
+      const result = await config.client.send(
         new QueryCommand({
-          TableName: deps.tableName,
+          TableName: config.deps.tableName,
           IndexName: index,
           KeyConditionExpression: '#sk = :sk',
           ExpressionAttributeNames: {
-            '#sk': deps.sortKey || 'sk',
+            '#sk': config.deps.sortKey || 'sk',
           },
           ExpressionAttributeValues: {
             ':sk': sk,
@@ -400,8 +367,8 @@ const createCreateFetchAllRecords = <T extends BaseRecord>(
       lastEvaluatedKey = result.LastEvaluatedKey;
     } while (lastEvaluatedKey);
     
-    logger.info('Records fetched via created function', { 
-      tableName: deps.tableName, 
+    config.logger.info('Records fetched via created function', { 
+      tableName: config.deps.tableName, 
       index, 
       sk, 
       count: items.length 
@@ -409,17 +376,17 @@ const createCreateFetchAllRecords = <T extends BaseRecord>(
     
     return items;
   } else {
-    logger.debug('Creating fetch function for all records', { 
-      tableName: deps.tableName 
+    config.logger.debug('Creating fetch function for all records', { 
+      tableName: config.deps.tableName 
     });
     
     const items: T[] = [];
     let lastEvaluatedKey: Record<string, any> | undefined;
     
     do {
-      const result = await client.send(
+      const result = await config.client.send(
         new ScanCommand({
-          TableName: deps.tableName,
+          TableName: config.deps.tableName,
           ExclusiveStartKey: lastEvaluatedKey,
         })
       );
@@ -431,8 +398,8 @@ const createCreateFetchAllRecords = <T extends BaseRecord>(
       lastEvaluatedKey = result.LastEvaluatedKey;
     } while (lastEvaluatedKey);
     
-    logger.info('All records fetched via created function', { 
-      tableName: deps.tableName, 
+    config.logger.info('All records fetched via created function', { 
+      tableName: config.deps.tableName, 
       count: items.length 
     });
     
@@ -441,9 +408,9 @@ const createCreateFetchAllRecords = <T extends BaseRecord>(
 };
 
 export const createAdapter = <T extends BaseRecord = BaseRecord>(
-  config: DynamoDBAdapterConfig
+  adapterConfig: DynamoDBAdapterConfig
 ): DynamoDBAdapter<T> => {
-  const mergedConfig = mergeWithDefaults(config);
+  const mergedConfig = mergeWithDefaults(adapterConfig);
   const { client, logger, tableName, partitionKey, sortKey, gsiName } = mergedConfig;
   
   const deps: DynamoDBClientDependencies = {
@@ -455,19 +422,26 @@ export const createAdapter = <T extends BaseRecord = BaseRecord>(
   
   const validator = createRecordValidator<T>(deps);
   
+  const config: AdapterConfig<T> = {
+    client,
+    deps,
+    logger,
+    validator,
+  };
+  
   logger.info('DynamoDB adapter created', { config: deps });
   
   return {
-    createOneRecord: createCreateOneRecord<T>(client, deps, logger, validator),
-    deleteOneRecord: createDeleteOneRecord<T>(client, deps, logger, validator),
-    replaceOneRecord: createReplaceOneRecord<T>(client, deps, logger, validator),
-    patchOneRecord: createPatchOneRecord<T>(client, deps, logger, validator),
-    createManyRecords: createCreateManyRecords<T>(client, deps, logger, validator),
-    deleteManyRecords: createDeleteManyRecords<T>(client, deps, logger, validator),
-    patchManyRecords: createPatchManyRecords<T>(client, deps, logger, validator),
-    fetchOneRecord: createFetchOneRecord<T>(client, deps, logger, validator),
-    fetchManyRecords: createFetchManyRecords<T>(client, deps, logger, validator),
-    fetchAllRecords: createFetchAllRecords<T>(client, deps, logger, validator),
-    createFetchAllRecords: createCreateFetchAllRecords<T>(client, deps, logger, validator),
+    createOneRecord: createCreateOneRecord<T>(config),
+    deleteOneRecord: createDeleteOneRecord<T>(config),
+    replaceOneRecord: createReplaceOneRecord<T>(config),
+    patchOneRecord: createPatchOneRecord<T>(config),
+    createManyRecords: createCreateManyRecords<T>(config),
+    deleteManyRecords: createDeleteManyRecords<T>(config),
+    patchManyRecords: createPatchManyRecords<T>(config),
+    fetchOneRecord: createFetchOneRecord<T>(config),
+    fetchManyRecords: createFetchManyRecords<T>(config),
+    fetchAllRecords: createFetchAllRecords<T>(config),
+    createFetchAllRecords: createCreateFetchAllRecords<T>(config),
   };
 };
