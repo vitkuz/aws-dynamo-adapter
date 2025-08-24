@@ -6,9 +6,9 @@ import { AdapterConfig } from '../../dynamodb.types';
  * Fetches a single record from DynamoDB by its keys
  * Returns null if the record is not found
  */
-export const createFetchOneRecord = <T extends BaseRecord>(
-  config: AdapterConfig<T>
-) => async (keys: DynamoDBKey): Promise<(T & RecordWithTimestamps) | null> => {
+export const createFetchOneRecord = (
+  config: AdapterConfig
+) => async <T extends BaseRecord = BaseRecord>(keys: DynamoDBKey): Promise<(T & RecordWithTimestamps) | null> => {
   const validatedKeys = config.validator.validateKeys(keys);
   
   config.logger.debug('Fetching record', { 

@@ -1,5 +1,5 @@
 import { BatchWriteCommand } from '@aws-sdk/lib-dynamodb';
-import { BaseRecord, DynamoDBKey } from '../../../../shared/types';
+import { DynamoDBKey } from '../../../../shared/types';
 import { AdapterConfig } from '../../dynamodb.types';
 import { DYNAMODB_BATCH_WRITE_LIMIT } from '../../dynamodb.constants';
 
@@ -7,8 +7,8 @@ import { DYNAMODB_BATCH_WRITE_LIMIT } from '../../dynamodb.constants';
  * Deletes multiple records from DynamoDB using batch write
  * Automatically splits into batches of 25 items (DynamoDB limit)
  */
-export const createDeleteManyRecords = <T extends BaseRecord>(
-  config: AdapterConfig<T>
+export const createDeleteManyRecords = (
+  config: AdapterConfig
 ) => async (keysList: DynamoDBKey[]): Promise<void> => {
   const validatedKeysList = config.validator.validateBatchKeys(keysList);
   

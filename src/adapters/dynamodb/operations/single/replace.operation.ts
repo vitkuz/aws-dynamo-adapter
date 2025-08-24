@@ -7,9 +7,9 @@ import { updateTimestamp, extractKeysFromRecord } from '../../dynamodb.utils';
  * Replaces an existing record in DynamoDB
  * Updates the updatedAt timestamp
  */
-export const createReplaceOneRecord = <T extends BaseRecord>(
-  config: AdapterConfig<T>
-) => async (record: T & WithTimestamps): Promise<T & RecordWithTimestamps> => {
+export const createReplaceOneRecord = (
+  config: AdapterConfig
+) => async <T extends BaseRecord = BaseRecord>(record: T & WithTimestamps): Promise<T & RecordWithTimestamps> => {
   const validatedRecord = config.validator.validateUpdateRecord(record);
   const updatedRecord = updateTimestamp(validatedRecord) as T & RecordWithTimestamps;
   

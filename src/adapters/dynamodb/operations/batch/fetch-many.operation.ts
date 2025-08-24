@@ -8,9 +8,9 @@ import { DYNAMODB_BATCH_GET_LIMIT } from '../../dynamodb.constants';
  * Automatically splits into batches of 100 items (DynamoDB limit)
  * Returns only existing records (non-existent keys are omitted)
  */
-export const createFetchManyRecords = <T extends BaseRecord>(
-  config: AdapterConfig<T>
-) => async (keysList: DynamoDBKey[]): Promise<(T & RecordWithTimestamps)[]> => {
+export const createFetchManyRecords = (
+  config: AdapterConfig
+) => async <T extends BaseRecord = BaseRecord>(keysList: DynamoDBKey[]): Promise<(T & RecordWithTimestamps)[]> => {
   if (keysList.length === 0) {
     config.logger.debug('No keys provided for batch fetch', { 
       tableName: config.deps.tableName 

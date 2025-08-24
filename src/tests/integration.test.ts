@@ -90,7 +90,7 @@ const runner = new TestRunner();
 
 // Test: Create adapter with default configuration
 runner.test('should create adapter with default configuration', async () => {
-  const adapter = createAdapter<TestProduct>({
+  const adapter = createAdapter({
     tableName: TABLE_NAME,
   });
   
@@ -115,7 +115,7 @@ runner.test('should create adapter with custom configuration', async () => {
     error: () => {},
   };
   
-  const adapter = createAdapter<TestProduct>({
+  const adapter = createAdapter({
     tableName: TABLE_NAME,
     partitionKey: 'customId',
     sortKey: 'customSk',
@@ -128,7 +128,7 @@ runner.test('should create adapter with custom configuration', async () => {
 
 // Test: Create one record
 runner.test('should create one record with timestamps', async () => {
-  const adapter = createAdapter<TestProduct>({
+  const adapter = createAdapter({
     tableName: TABLE_NAME,
   });
   
@@ -139,7 +139,7 @@ runner.test('should create one record with timestamps', async () => {
     price: 99.99,
   };
   
-  const created = await adapter.createOneRecord(product);
+  const created = await adapter.createOneRecord<TestProduct>(product);
   
   assert.equal(created.id, product.id, 'ID should match');
   assert.equal(created.sk, product.sk, 'Sort key should match');
@@ -155,7 +155,7 @@ runner.test('should create one record with timestamps', async () => {
 
 // Test: Delete one record
 runner.test('should delete one record', async () => {
-  const adapter = createAdapter<TestProduct>({
+  const adapter = createAdapter({
     tableName: TABLE_NAME,
   });
   
@@ -166,18 +166,18 @@ runner.test('should delete one record', async () => {
     price: 49.99,
   };
   
-  const created = await adapter.createOneRecord(product);
+  const created = await adapter.createOneRecord<TestProduct>(product);
   await adapter.deleteOneRecord({ id: created.id, sk: created.sk });
   
   // Verify deletion by trying to fetch all products
-  const products = await adapter.fetchAllRecords('products');
+  const products = await adapter.fetchAllRecords<TestProduct>('products');
   const found = products.find(p => p.id === created.id);
   assert.ok(!found, 'Product should be deleted');
 });
 
 // Test: Replace one record
 runner.test('should replace one record and update timestamp', async () => {
-  const adapter = createAdapter<TestProduct>({
+  const adapter = createAdapter({
     tableName: TABLE_NAME,
   });
   
@@ -188,7 +188,7 @@ runner.test('should replace one record and update timestamp', async () => {
     price: 29.99,
   };
   
-  const created = await adapter.createOneRecord(product);
+  const created = await adapter.createOneRecord<TestProduct>(product);
   
   // Wait a bit to ensure different timestamp
   await new Promise(resolve => setTimeout(resolve, 100));
@@ -200,7 +200,7 @@ runner.test('should replace one record and update timestamp', async () => {
     category: 'Electronics',
   };
   
-  const replaced = await adapter.replaceOneRecord(updatedProduct);
+  const replaced = await adapter.replaceOneRecord<TestProduct>(updatedProduct);
   
   assert.equal(replaced.id, created.id, 'ID should remain the same');
   assert.equal(replaced.name, 'Updated Product', 'Name should be updated');
@@ -215,7 +215,7 @@ runner.test('should replace one record and update timestamp', async () => {
 
 // Test: Patch one record
 runner.test('should patch one record with partial updates', async () => {
-  const adapter = createAdapter<TestProduct>({
+  const adapter = createAdapter({
     tableName: TABLE_NAME,
   });
   
@@ -226,12 +226,12 @@ runner.test('should patch one record with partial updates', async () => {
     price: 19.99,
   };
   
-  const created = await adapter.createOneRecord(product);
+  const created = await adapter.createOneRecord<TestProduct>(product);
   
   // Wait a bit to ensure different timestamp
   await new Promise(resolve => setTimeout(resolve, 100));
   
-  const patched = await adapter.patchOneRecord(
+  const patched = await adapter.patchOneRecord<TestProduct>(
     { id: created.id, sk: created.sk },
     { price: 24.99, category: 'Books' }
   );
@@ -248,7 +248,7 @@ runner.test('should patch one record with partial updates', async () => {
 
 // Test: Create many records
 runner.test('should create many records in batches', async () => {
-  const adapter = createAdapter<TestProduct>({
+  const adapter = createAdapter({
     tableName: TABLE_NAME,
   });
   
@@ -259,7 +259,7 @@ runner.test('should create many records in batches', async () => {
     price: 10 + i,
   }));
   
-  const created = await adapter.createManyRecords(products);
+  const created = await adapter.createManyRecords<TestProduct>(products);
   
   assert.length(created, 30, 'Should create all 30 products');
   
@@ -276,7 +276,7 @@ runner.test('should create many records in batches', async () => {
 
 // Test: Delete many records
 runner.test('should delete many records in batches', async () => {
-  const adapter = createAdapter<TestProduct>({
+  const adapter = createAdapter({
     tableName: TABLE_NAME,
   });
   
@@ -287,13 +287,13 @@ runner.test('should delete many records in batches', async () => {
     price: 5 + i,
   }));
   
-  const created = await adapter.createManyRecords(products);
+  const created = await adapter.createManyRecords<TestProduct>(products);
   const keysToDelete = created.map(p => ({ id: p.id, sk: p.sk }));
   
   await adapter.deleteManyRecords(keysToDelete);
   
   // Verify deletion
-  const remaining = await adapter.fetchAllRecords('products');
+  const remaining = await adapter.fetchAllRecords<TestProduct>('products');
   const foundIds = created.map(p => p.id);
   const anyFound = remaining.some(p => foundIds.includes(p.id));
   
@@ -302,7 +302,7 @@ runner.test('should delete many records in batches', async () => {
 
 // Test: Patch many records
 runner.test('should patch many records', async () => {
-  const adapter = createAdapter<TestProduct>({
+  const adapter = createAdapter({
     tableName: TABLE_NAME,
   });
   
@@ -313,7 +313,7 @@ runner.test('should patch many records', async () => {
     price: 20 + i,
   }));
   
-  const created = await adapter.createManyRecords(products);
+  const created = await adapter.createManyRecords<TestProduct>(products);
   
   // Wait a bit to ensure different timestamp
   await new Promise(resolve => setTimeout(resolve, 100));
@@ -323,7 +323,7 @@ runner.test('should patch many records', async () => {
     updates: { price: p.price * 2, category: 'Sale' },
   }));
   
-  const patched = await adapter.patchManyRecords(updates);
+  const patched = await adapter.patchManyRecords<TestProduct>(updates);
   
   assert.length(patched, 5, 'Should patch all 5 products');
   
@@ -340,7 +340,7 @@ runner.test('should patch many records', async () => {
 
 // Test: Fetch all records by sort key
 runner.test('should fetch all records by sort key', async () => {
-  const adapter = createAdapter<TestProduct>({
+  const adapter = createAdapter({
     tableName: TABLE_NAME,
   });
   
@@ -351,9 +351,9 @@ runner.test('should fetch all records by sort key', async () => {
     price: 15 + i,
   }));
   
-  const created = await adapter.createManyRecords(products);
+  const created = await adapter.createManyRecords<TestProduct>(products);
   
-  const fetched = await adapter.fetchAllRecords('products');
+  const fetched = await adapter.fetchAllRecords<TestProduct>('products');
   
   // Should contain at least our created products
   assert.ok(fetched.length >= 15, 'Should fetch at least 15 products');
@@ -383,9 +383,9 @@ runner.test('should create fetch function for specific sort key', async () => {
     username: `user${i}`,
   }));
   
-  const created = await adapter.createManyRecords(users);
+  const created = await adapter.createManyRecords<TestUser>(users);
   
-  const fetchUsers = adapter.createFetchAllRecords('gsiBySk', 'users');
+  const fetchUsers = adapter.createFetchAllRecords<TestUser>('gsiBySk', 'users');
   const fetched = await fetchUsers();
   
   // Should contain at least our created users
@@ -421,10 +421,10 @@ runner.test('should create fetch function to scan all records', async () => {
     username: 'testuser',
   };
   
-  const createdProduct = await adapter.createOneRecord(product);
-  const createdUser = await adapter.createOneRecord(user);
+  const createdProduct = await adapter.createOneRecord<TestProduct>(product);
+  const createdUser = await adapter.createOneRecord<TestUser>(user);
   
-  const fetchAll = adapter.createFetchAllRecords();
+  const fetchAll = adapter.createFetchAllRecords<BaseRecord>();
   const allRecords = await fetchAll();
   
   // Should contain at least our created records
@@ -443,7 +443,7 @@ runner.test('should create fetch function to scan all records', async () => {
 
 // Test: Handle large batches (more than 25 items)
 runner.test('should handle batch operations with more than 25 items', async () => {
-  const adapter = createAdapter<TestProduct>({
+  const adapter = createAdapter({
     tableName: TABLE_NAME,
   });
   
@@ -454,14 +454,14 @@ runner.test('should handle batch operations with more than 25 items', async () =
     price: 100 + i,
   }));
   
-  const created = await adapter.createManyRecords(products);
+  const created = await adapter.createManyRecords<TestProduct>(products);
   assert.length(created, 50, 'Should create all 50 products');
   
   const keysToDelete = created.map(p => ({ id: p.id, sk: p.sk }));
   await adapter.deleteManyRecords(keysToDelete);
   
   // Verify deletion
-  const remaining = await adapter.fetchAllRecords('products');
+  const remaining = await adapter.fetchAllRecords<TestProduct>('products');
   const createdIds = created.map(p => p.id);
   const anyFound = remaining.some(p => createdIds.includes(p.id));
   

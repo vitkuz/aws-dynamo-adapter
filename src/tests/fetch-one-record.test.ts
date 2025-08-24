@@ -5,7 +5,7 @@ const TABLE_NAME = process.env.TEST_TABLE_NAME || 'test-dynamodb-adapter';
 async function testFetchOneRecord() {
   console.log('Testing fetchOneRecord...');
   
-  const adapter = createAdapter<{ id: string; sk: string; name: string; price: number }>({
+  const adapter = createAdapter({
     tableName: TABLE_NAME,
   });
   
@@ -18,11 +18,11 @@ async function testFetchOneRecord() {
   };
   
   try {
-    const created = await adapter.createOneRecord(record);
+    const created = await adapter.createOneRecord<{ id: string; sk: string; name: string; price: number }>(record);
     console.log('✅ Created record for testing:', created);
     
     console.log('Testing fetchOneRecord with existing record...');
-    const fetched = await adapter.fetchOneRecord({ id: testId, sk: 'products' });
+    const fetched = await adapter.fetchOneRecord<{ id: string; sk: string; name: string; price: number }>({ id: testId, sk: 'products' });
     
     if (!fetched) throw new Error('Record should have been found');
     if (fetched.id !== testId) throw new Error(`ID mismatch: ${fetched.id} !== ${testId}`);
@@ -39,7 +39,7 @@ async function testFetchOneRecord() {
     
     console.log('Testing fetchOneRecord with non-existent record...');
     const nonExistentId = generateId();
-    const notFound = await adapter.fetchOneRecord({ id: nonExistentId, sk: 'products' });
+    const notFound = await adapter.fetchOneRecord<{ id: string; sk: string; name: string; price: number }>({ id: nonExistentId, sk: 'products' });
     
     if (notFound !== null) throw new Error('Should return null for non-existent record');
     
@@ -49,7 +49,7 @@ async function testFetchOneRecord() {
     console.log('✅ Cleanup completed');
     
     console.log('Testing fetchOneRecord after deletion...');
-    const deletedRecord = await adapter.fetchOneRecord({ id: testId, sk: 'products' });
+    const deletedRecord = await adapter.fetchOneRecord<{ id: string; sk: string; name: string; price: number }>({ id: testId, sk: 'products' });
     
     if (deletedRecord !== null) throw new Error('Should return null for deleted record');
     

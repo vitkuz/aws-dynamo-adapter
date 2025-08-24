@@ -7,9 +7,9 @@ import { updateTimestamp } from '../../dynamodb.utils';
  * Patches a record in DynamoDB with partial updates
  * Only updates the specified fields and the updatedAt timestamp
  */
-export const createPatchOneRecord = <T extends BaseRecord>(
-  config: AdapterConfig<T>
-) => async (keys: DynamoDBKey, updates: Partial<T>): Promise<T & RecordWithTimestamps> => {
+export const createPatchOneRecord = (
+  config: AdapterConfig
+) => async <T extends BaseRecord = BaseRecord>(keys: DynamoDBKey, updates: Partial<T>): Promise<T & RecordWithTimestamps> => {
   const { keys: validatedKeys, updates: validatedUpdates } = config.validator.validatePatchUpdates(keys, updates);
   const updatesWithTimestamp = updateTimestamp(validatedUpdates);
   
