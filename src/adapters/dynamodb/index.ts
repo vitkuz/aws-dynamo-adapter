@@ -1,20 +1,20 @@
 export { createAdapter } from './dynamodb.adapter';
 export type { DynamoDBAdapter } from './dynamodb.types';
-export { 
+export {
   generateId,
   getCurrentTimestamp,
   addTimestamps,
   addTimestampsIfMissing,
   updateTimestamp,
   buildKeys,
-  extractKeysFromRecord
+  extractKeysFromRecord,
 } from './dynamodb.utils';
 export {
   baseRecordSchema,
   dynamoDBKeySchema,
   dynamoDBAdapterConfigSchema,
   validateKeys,
-  validateRecord
+  validateRecord,
 } from './dynamodb.schema';
 export {
   DEFAULT_PARTITION_KEY,
@@ -22,9 +22,6 @@ export {
   DEFAULT_GSI_NAME,
   DEFAULT_DYNAMODB_CONFIG,
   mergeWithDefaults,
-  type MergedConfig
+  type MergedConfig,
 } from './dynamodb.config';
-export { 
-  createRecordValidator,
-  type RecordValidator 
-} from './dynamodb.validation';
+export { createRecordValidator, type RecordValidator } from './dynamodb.validation';

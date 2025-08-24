@@ -21,15 +21,15 @@ export const validateKeys = (
   sortKey?: string
 ): z.infer<typeof dynamoDBKeySchema> => {
   const parsed = dynamoDBKeySchema.parse(keys);
-  
+
   if (!parsed[partitionKey]) {
     throw new Error(`Missing partition key: ${partitionKey}`);
   }
-  
+
   if (sortKey && !parsed[sortKey]) {
     throw new Error(`Missing sort key: ${sortKey}`);
   }
-  
+
   return parsed;
 };
 
@@ -41,10 +41,10 @@ export const validateRecord = <T extends Record<string, any>>(
   if (!record[partitionKey]) {
     throw new Error(`Record missing partition key: ${partitionKey}`);
   }
-  
+
   if (sortKey && !record[sortKey]) {
     throw new Error(`Record missing sort key: ${sortKey}`);
   }
-  
+
   return record;
 };

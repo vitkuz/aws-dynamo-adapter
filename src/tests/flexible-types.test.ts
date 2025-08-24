@@ -43,7 +43,7 @@ class TestRunner {
 
   async run() {
     console.log('\n🧪 Running flexible types tests...\n');
-    
+
     for (const test of this.tests) {
       try {
         await test.fn();
@@ -55,9 +55,9 @@ class TestRunner {
         console.error(`   Error: ${error}`);
       }
     }
-    
+
     console.log(`\n📊 Results: ${this.passed} passed, ${this.failed} failed\n`);
-    
+
     if (this.failed > 0) {
       process.exit(1);
     }
@@ -71,18 +71,21 @@ const assert = {
       throw new Error(message || `Expected ${expected}, got ${actual}`);
     }
   },
-  
+
   ok: (value: any, message?: string) => {
     if (!value) {
       throw new Error(message || `Expected truthy value, got ${value}`);
     }
   },
-  
+
   deepEqual: (actual: any, expected: any, message?: string) => {
     if (JSON.stringify(actual) !== JSON.stringify(expected)) {
-      throw new Error(message || `Objects are not equal: ${JSON.stringify(actual)} !== ${JSON.stringify(expected)}`);
+      throw new Error(
+        message ||
+          `Objects are not equal: ${JSON.stringify(actual)} !== ${JSON.stringify(expected)}`
+      );
     }
-  }
+  },
 };
 
 // Run tests
@@ -93,23 +96,23 @@ runner.test('should work with simple types without timestamp fields', async () =
   const adapter = createAdapter<SimpleProduct>({
     tableName: TABLE_NAME,
   });
-  
+
   const product: SimpleProduct = {
     id: generateId(),
     sk: 'products',
     name: 'Simple Product',
     price: 29.99,
   };
-  
+
   // Create record - adapter adds timestamps automatically
   const created = await adapter.createOneRecord(product);
-  
+
   assert.equal(created.id, product.id, 'ID should match');
   assert.equal(created.name, product.name, 'Name should match');
   assert.equal(created.price, product.price, 'Price should match');
   assert.ok(created.createdAt, 'Should have createdAt timestamp');
   assert.ok(created.updatedAt, 'Should have updatedAt timestamp');
-  
+
   // Cleanup
   await adapter.deleteOneRecord({ id: created.id, sk: created.sk });
 });
@@ -119,7 +122,7 @@ runner.test('should work with optional timestamp fields', async () => {
   const adapter = createAdapter<ProductWithOptionalTimestamps>({
     tableName: TABLE_NAME,
   });
-  
+
   // Test 1: Without providing timestamps
   const product1: ProductWithOptionalTimestamps = {
     id: generateId(),
@@ -127,11 +130,11 @@ runner.test('should work with optional timestamp fields', async () => {
     name: 'Product without timestamps',
     price: 39.99,
   };
-  
+
   const created1 = await adapter.createOneRecord(product1);
   assert.ok(created1.createdAt, 'Should generate createdAt');
   assert.ok(created1.updatedAt, 'Should generate updatedAt');
-  
+
   // Test 2: With providing timestamps
   const customDate = '2024-01-01T00:00:00.000Z';
   const product2: ProductWithOptionalTimestamps = {
@@ -142,11 +145,11 @@ runner.test('should work with optional timestamp fields', async () => {
     createdAt: customDate,
     updatedAt: customDate,
   };
-  
+
   const created2 = await adapter.createOneRecord(product2);
   assert.equal(created2.createdAt, customDate, 'Should preserve provided createdAt');
   assert.equal(created2.updatedAt, customDate, 'Should preserve provided updatedAt');
-  
+
   // Cleanup
   await adapter.deleteOneRecord({ id: created1.id, sk: created1.sk });
   await adapter.deleteOneRecord({ id: created2.id, sk: created2.sk });
@@ -157,7 +160,7 @@ runner.test('should work with complex nested types', async () => {
   const adapter = createAdapter<CustomRecord>({
     tableName: TABLE_NAME,
   });
-  
+
   const record: CustomRecord = {
     id: generateId(),
     sk: 'custom',
@@ -171,30 +174,30 @@ runner.test('should work with complex nested types', async () => {
       key3: true,
     },
   };
-  
+
   const created = await adapter.createOneRecord(record);
-  
+
   assert.equal(created.id, record.id, 'ID should match');
   assert.deepEqual(created.data, record.data, 'Nested data should match');
   assert.deepEqual(created.metadata, record.metadata, 'Metadata should match');
   assert.ok(created.createdAt, 'Should have createdAt timestamp');
   assert.ok(created.updatedAt, 'Should have updatedAt timestamp');
-  
+
   // Test updating
   const updated = await adapter.patchOneRecord(
     { id: created.id, sk: created.sk },
-    { 
-      data: { 
-        nested: 'updated', 
-        values: [10, 20, 30] 
-      } 
+    {
+      data: {
+        nested: 'updated',
+        values: [10, 20, 30],
+      },
     }
   );
-  
+
   assert.equal(updated.data.nested, 'updated', 'Nested value should be updated');
   assert.deepEqual(updated.data.values, [10, 20, 30], 'Array should be updated');
   assert.ok(updated.updatedAt > created.updatedAt, 'UpdatedAt should be newer');
-  
+
   // Cleanup
   await adapter.deleteOneRecord({ id: created.id, sk: created.sk });
 });
@@ -204,15 +207,15 @@ runner.test('should handle batch operations with flexible types', async () => {
   const adapter = createAdapter<SimpleProduct>({
     tableName: TABLE_NAME,
   });
-  
+
   const products: SimpleProduct[] = [
     { id: generateId(), sk: 'products', name: 'Product 1', price: 10 },
     { id: generateId(), sk: 'products', name: 'Product 2', price: 20 },
     { id: generateId(), sk: 'products', name: 'Product 3', price: 30 },
   ];
-  
+
   const created = await adapter.createManyRecords(products);
-  
+
   assert.equal(created.length, 3, 'Should create all products');
   created.forEach((product, i) => {
     assert.equal(product.name, products[i].name, `Product ${i} name should match`);
@@ -220,9 +223,9 @@ runner.test('should handle batch operations with flexible types', async () => {
     assert.ok(product.createdAt, `Product ${i} should have createdAt`);
     assert.ok(product.updatedAt, `Product ${i} should have updatedAt`);
   });
-  
+
   // Cleanup
-  const keysToDelete = created.map(p => ({ id: p.id, sk: p.sk }));
+  const keysToDelete = created.map((p) => ({ id: p.id, sk: p.sk }));
   await adapter.deleteManyRecords(keysToDelete);
 });
 
@@ -232,7 +235,7 @@ runner.test('should work with any type (Record<string, any>)', async () => {
   const adapter = createAdapter<Record<string, any>>({
     tableName: TABLE_NAME,
   });
-  
+
   const record = {
     id: generateId(),
     sk: 'anything',
@@ -242,17 +245,21 @@ runner.test('should work with any type (Record<string, any>)', async () => {
     arrayField: ['a', 'b', 'c'],
     objectField: { nested: { deeply: 'value' } },
   };
-  
+
   const created = await adapter.createOneRecord(record);
-  
+
   assert.equal(created.randomField, 'random value', 'String field should match');
   assert.equal(created.numberField, 123, 'Number field should match');
   assert.equal(created.boolField, true, 'Boolean field should match');
   assert.deepEqual(created.arrayField, ['a', 'b', 'c'], 'Array field should match');
-  assert.deepEqual(created.objectField, { nested: { deeply: 'value' } }, 'Object field should match');
+  assert.deepEqual(
+    created.objectField,
+    { nested: { deeply: 'value' } },
+    'Object field should match'
+  );
   assert.ok(created.createdAt, 'Should have createdAt timestamp');
   assert.ok(created.updatedAt, 'Should have updatedAt timestamp');
-  
+
   // Cleanup
   await adapter.deleteOneRecord({ id: created.id, sk: created.sk });
 });

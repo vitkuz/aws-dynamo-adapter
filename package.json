@@ -24,9 +24,17 @@
     "test:batch": "tsx src/tests/create-many-records.test.ts",
     "test:fetch-many": "tsx src/tests/fetch-many-records.test.ts",
     "setup:db": "tsx scripts/setup-db.ts",
-    "teardown:db": "tsx scripts/teardown-db.ts"
+    "teardown:db": "tsx scripts/teardown-db.ts",
+    "format": "prettier --write \"src/**/*.{ts,tsx,json}\"",
+    "format:check": "prettier --check \"src/**/*.{ts,tsx,json}\"",
+    "lint": "npm run format:check"
   },
-  "keywords": ["dynamodb", "adapter", "typescript", "aws"],
+  "keywords": [
+    "dynamodb",
+    "adapter",
+    "typescript",
+    "aws"
+  ],
   "author": "",
   "license": "ISC",
   "dependencies": {
@@ -39,6 +47,7 @@
   "devDependencies": {
     "@types/node": "^24.3.0",
     "@types/uuid": "^10.0.0",
+    "prettier": "^3.6.2",
     "rimraf": "^6.0.1",
     "tsx": "^4.20.4",
     "typescript": "^5.9.2"

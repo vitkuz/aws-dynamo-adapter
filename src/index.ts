@@ -1,11 +1,6 @@
 export { createAdapter } from './adapters/dynamodb';
 export type { DynamoDBAdapter } from './adapters/dynamodb';
-export type { 
-  BaseRecord, 
-  Logger, 
-  DynamoDBAdapterConfig, 
-  DynamoDBKey 
-} from './shared/types';
+export type { BaseRecord, Logger, DynamoDBAdapterConfig, DynamoDBKey } from './shared/types';
 export {
   generateId,
   getCurrentTimestamp,
@@ -23,5 +18,5 @@ export {
   DEFAULT_SORT_KEY,
   DEFAULT_GSI_NAME,
   DEFAULT_DYNAMODB_CONFIG,
-  mergeWithDefaults
+  mergeWithDefaults,
 } from './adapters/dynamodb';
