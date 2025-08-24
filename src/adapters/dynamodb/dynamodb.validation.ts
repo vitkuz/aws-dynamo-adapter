@@ -3,13 +3,24 @@ import { BaseRecord, DynamoDBKey, WithTimestamps } from '../../shared/types';
 import { DynamoDBClientDependencies } from './dynamodb.types';
 
 export interface RecordValidator {
-  validateCreateRecord: <T extends BaseRecord = BaseRecord>(record: T & WithTimestamps) => T & WithTimestamps;
+  validateCreateRecord: <T extends BaseRecord = BaseRecord>(
+    record: T & WithTimestamps
+  ) => T & WithTimestamps;
   validateKeys: (keys: DynamoDBKey) => DynamoDBKey;
-  validateUpdateRecord: <T extends BaseRecord = BaseRecord>(record: T & WithTimestamps) => T & WithTimestamps;
-  validateBatchRecords: <T extends BaseRecord = BaseRecord>(records: (T & WithTimestamps)[]) => (T & WithTimestamps)[];
+  validateUpdateRecord: <T extends BaseRecord = BaseRecord>(
+    record: T & WithTimestamps
+  ) => T & WithTimestamps;
+  validateBatchRecords: <T extends BaseRecord = BaseRecord>(
+    records: (T & WithTimestamps)[]
+  ) => (T & WithTimestamps)[];
   validateBatchKeys: (keysList: DynamoDBKey[]) => DynamoDBKey[];
-  validatePatchUpdates: <T extends BaseRecord = BaseRecord>(keys: DynamoDBKey, updates: Partial<T>) => { keys: DynamoDBKey; updates: Partial<T> };
-  validateBatchPatchUpdates: <T extends BaseRecord = BaseRecord>(updates: Array<{ keys: DynamoDBKey; updates: Partial<T> }>) => Array<{ keys: DynamoDBKey; updates: Partial<T> }>;
+  validatePatchUpdates: <T extends BaseRecord = BaseRecord>(
+    keys: DynamoDBKey,
+    updates: Partial<T>
+  ) => { keys: DynamoDBKey; updates: Partial<T> };
+  validateBatchPatchUpdates: <T extends BaseRecord = BaseRecord>(
+    updates: Array<{ keys: DynamoDBKey; updates: Partial<T> }>
+  ) => Array<{ keys: DynamoDBKey; updates: Partial<T> }>;
 }
 
 // Factory to create dynamic Zod schema based on configuration
@@ -18,7 +29,7 @@ const createKeySchema = (partitionKey: string, sortKey: string) => {
     [partitionKey]: z.string().min(1),
     [sortKey]: z.string().min(1),
   };
-  
+
   return z.object(schemaShape).catchall(z.union([z.string(), z.number()]));
 };
 
@@ -28,18 +39,18 @@ const createRecordSchema = (partitionKey: string, sortKey: string) => {
     [partitionKey]: z.string().min(1),
     [sortKey]: z.string().min(1),
   };
-  
+
   return z.object(schemaShape).passthrough();
 };
 
 // Create validator instance
-export const createRecordValidator = (
-  deps: DynamoDBClientDependencies
-): RecordValidator => {
+export const createRecordValidator = (deps: DynamoDBClientDependencies): RecordValidator => {
   const keySchema = createKeySchema(deps.partitionKey, deps.sortKey);
   const recordSchema = createRecordSchema(deps.partitionKey, deps.sortKey);
-  
-  const validateCreateRecord = <T extends BaseRecord = BaseRecord>(record: T & WithTimestamps): T & WithTimestamps => {
+
+  const validateCreateRecord = <T extends BaseRecord = BaseRecord>(
+    record: T & WithTimestamps
+  ): T & WithTimestamps => {
     try {
       const validated = recordSchema.parse(record);
       return validated as T & WithTimestamps;
@@ -47,12 +58,14 @@ export const createRecordValidator = (
       if (error instanceof ZodError) {
         const issues = error.issues || [];
         const missingFields = issues.map((e: z.ZodIssue) => e.path.join('.')).join(', ');
-        throw new Error(`Validation failed for create record: Missing or invalid fields: ${missingFields}`);
+        throw new Error(
+          `Validation failed for create record: Missing or invalid fields: ${missingFields}`
+        );
       }
       throw error;
     }
   };
-  
+
   const validateKeys = (keys: DynamoDBKey): DynamoDBKey => {
     try {
       const validated = keySchema.parse(keys);
@@ -71,8 +84,10 @@ export const createRecordValidator = (
       throw error;
     }
   };
-  
-  const validateUpdateRecord = <T extends BaseRecord = BaseRecord>(record: T & WithTimestamps): T & WithTimestamps => {
+
+  const validateUpdateRecord = <T extends BaseRecord = BaseRecord>(
+    record: T & WithTimestamps
+  ): T & WithTimestamps => {
     try {
       const validated = recordSchema.parse(record);
       return validated as T & WithTimestamps;
@@ -80,13 +95,17 @@ export const createRecordValidator = (
       if (error instanceof ZodError) {
         const issues = error.issues || [];
         const missingFields = issues.map((e: z.ZodIssue) => e.path.join('.')).join(', ');
-        throw new Error(`Validation failed for update record: Missing or invalid fields: ${missingFields}`);
+        throw new Error(
+          `Validation failed for update record: Missing or invalid fields: ${missingFields}`
+        );
       }
       throw error;
     }
   };
-  
-  const validateBatchRecords = <T extends BaseRecord = BaseRecord>(records: (T & WithTimestamps)[]): (T & WithTimestamps)[] => {
+
+  const validateBatchRecords = <T extends BaseRecord = BaseRecord>(
+    records: (T & WithTimestamps)[]
+  ): (T & WithTimestamps)[] => {
     return records.map((record, index) => {
       try {
         return validateCreateRecord(record);
@@ -98,7 +117,7 @@ export const createRecordValidator = (
       }
     });
   };
-  
+
   const validateBatchKeys = (keysList: DynamoDBKey[]): DynamoDBKey[] => {
     return keysList.map((keys, index) => {
       try {
@@ -111,22 +130,27 @@ export const createRecordValidator = (
       }
     });
   };
-  
-  const validatePatchUpdates = <T extends BaseRecord = BaseRecord>(keys: DynamoDBKey, updates: Partial<T>): { keys: DynamoDBKey; updates: Partial<T> } => {
+
+  const validatePatchUpdates = <T extends BaseRecord = BaseRecord>(
+    keys: DynamoDBKey,
+    updates: Partial<T>
+  ): { keys: DynamoDBKey; updates: Partial<T> } => {
     const validatedKeys = validateKeys(keys);
-    
+
     // Ensure updates don't contain partition or sort keys
     const cleanedUpdates = { ...updates };
     delete cleanedUpdates[deps.partitionKey as keyof T];
     delete cleanedUpdates[deps.sortKey as keyof T];
-    
+
     return {
       keys: validatedKeys,
       updates: cleanedUpdates,
     };
   };
-  
-  const validateBatchPatchUpdates = <T extends BaseRecord = BaseRecord>(updates: Array<{ keys: DynamoDBKey; updates: Partial<T> }>): Array<{ keys: DynamoDBKey; updates: Partial<T> }> => {
+
+  const validateBatchPatchUpdates = <T extends BaseRecord = BaseRecord>(
+    updates: Array<{ keys: DynamoDBKey; updates: Partial<T> }>
+  ): Array<{ keys: DynamoDBKey; updates: Partial<T> }> => {
     return updates.map((update, index) => {
       try {
         return validatePatchUpdates(update.keys, update.updates);
@@ -138,7 +162,7 @@ export const createRecordValidator = (
       }
     });
   };
-  
+
   return {
     validateCreateRecord,
     validateKeys,

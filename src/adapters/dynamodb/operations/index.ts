@@ -20,7 +20,4 @@ export {
 } from './batch';
 
 // Query operations
-export {
-  createFetchAllRecords,
-  createCreateFetchAllRecords,
-} from './query';
+export { createFetchAllRecords, createCreateFetchAllRecords } from './query';

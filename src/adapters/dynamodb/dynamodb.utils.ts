@@ -14,7 +14,9 @@ export const addTimestamps = <T extends BaseRecord>(record: T): T & RecordWithTi
   };
 };
 
-export const addTimestampsIfMissing = <T extends BaseRecord>(record: T & WithTimestamps): T & RecordWithTimestamps => {
+export const addTimestampsIfMissing = <T extends BaseRecord>(
+  record: T & WithTimestamps
+): T & RecordWithTimestamps => {
   const timestamp = getCurrentTimestamp();
   return {
     ...record,
@@ -23,7 +25,9 @@ export const addTimestampsIfMissing = <T extends BaseRecord>(record: T & WithTim
   } as T & RecordWithTimestamps;
 };
 
-export const updateTimestamp = <T extends BaseRecord>(record: T & WithTimestamps): T & { updatedAt: string } => ({
+export const updateTimestamp = <T extends BaseRecord>(
+  record: T & WithTimestamps
+): T & { updatedAt: string } => ({
   ...record,
   updatedAt: getCurrentTimestamp(),
 });
@@ -37,11 +41,11 @@ export const buildKeys = (
   const keys: Record<string, string | number> = {
     [partitionKey]: partitionValue,
   };
-  
+
   if (sortKey && sortValue !== undefined) {
     keys[sortKey] = sortValue;
   }
-  
+
   return keys;
 };
 
@@ -53,10 +57,10 @@ export const extractKeysFromRecord = <T extends Record<string, any>>(
   const keys: Record<string, string | number> = {
     [partitionKey]: record[partitionKey],
   };
-  
+
   if (sortKey && record[sortKey] !== undefined) {
     keys[sortKey] = record[sortKey];
   }
-  
+
   return keys;
 };

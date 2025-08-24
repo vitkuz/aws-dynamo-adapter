@@ -7,32 +7,34 @@ import { addTimestampsIfMissing, extractKeysFromRecord } from '../../dynamodb.ut
  * Creates a single record in DynamoDB
  * Automatically adds timestamps if not present
  */
-export const createCreateOneRecord = (
-  config: AdapterConfig
-) => async <T extends BaseRecord = BaseRecord>(record: T & WithTimestamps): Promise<T & RecordWithTimestamps> => {
-  const validatedRecord = config.validator.validateCreateRecord(record);
-  const recordWithTimestamps = addTimestampsIfMissing(validatedRecord);
-  
-  config.logger.debug('Creating record', { 
-    tableName: config.deps.tableName, 
-    record: recordWithTimestamps 
-  });
-  
-  await config.client.send(
-    new PutCommand({
-      TableName: config.deps.tableName,
-      Item: recordWithTimestamps,
-    })
-  );
-  
-  config.logger.info('Record created successfully', { 
-    tableName: config.deps.tableName,
-    keys: extractKeysFromRecord(
-      recordWithTimestamps, 
-      config.deps.partitionKey, 
-      config.deps.sortKey
-    )
-  });
-  
-  return recordWithTimestamps;
-};
+export const createCreateOneRecord =
+  (config: AdapterConfig) =>
+  async <T extends BaseRecord = BaseRecord>(
+    record: T & WithTimestamps
+  ): Promise<T & RecordWithTimestamps> => {
+    const validatedRecord = config.validator.validateCreateRecord(record);
+    const recordWithTimestamps = addTimestampsIfMissing(validatedRecord);
+
+    config.logger.debug('Creating record', {
+      tableName: config.deps.tableName,
+      record: recordWithTimestamps,
+    });
+
+    await config.client.send(
+      new PutCommand({
+        TableName: config.deps.tableName,
+        Item: recordWithTimestamps,
+      })
+    );
+
+    config.logger.info('Record created successfully', {
+      tableName: config.deps.tableName,
+      keys: extractKeysFromRecord(
+        recordWithTimestamps,
+        config.deps.partitionKey,
+        config.deps.sortKey
+      ),
+    });
+
+    return recordWithTimestamps;
+  };
