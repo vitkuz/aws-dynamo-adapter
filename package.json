@@ -22,6 +22,7 @@
     "test:create": "tsx src/tests/create-one-record.test.ts",
     "test:fetch": "tsx src/tests/fetch-one-record.test.ts",
     "test:batch": "tsx src/tests/create-many-records.test.ts",
+    "test:fetch-many": "tsx src/tests/fetch-many-records.test.ts",
     "setup:db": "tsx scripts/setup-db.ts",
     "teardown:db": "tsx scripts/teardown-db.ts"
   },
