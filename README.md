@@ -1,4 +1,6 @@
-# @dynamodb/adapter
+# @vitkuz/dynamodb-adapter
+
+[![npm version](https://badge.fury.io/js/@vitkuz%2Fdynamodb-adapter.svg)](https://www.npmjs.com/package/@vitkuz/dynamodb-adapter)
 
 Type-safe DynamoDB adapter with configurable keys and comprehensive operations.
 
@@ -18,7 +20,7 @@ Type-safe DynamoDB adapter with configurable keys and comprehensive operations.
 ## Installation
 
 ```bash
-npm install @dynamodb/adapter
+npm install @vitkuz/dynamodb-adapter
 ```
 
 ## Usage
@@ -26,7 +28,7 @@ npm install @dynamodb/adapter
 ### Basic Example
 
 ```typescript
-import { createAdapter } from '@dynamodb/adapter';
+import { createAdapter } from '@vitkuz/dynamodb-adapter';
 
 interface Product {
   id: string;
@@ -141,13 +143,20 @@ const adapter = createAdapter<Product>({
 
 ## API Methods
 
+### Single Record Operations
 - `createOneRecord(record)` - Create a single record with timestamps
-- `deleteOneRecord(keys)` - Delete a single record
+- `fetchOneRecord(keys)` - Fetch a single record by partition and sort keys
 - `replaceOneRecord(record)` - Replace an entire record
 - `patchOneRecord(keys, updates)` - Partially update a record
+- `deleteOneRecord(keys)` - Delete a single record
+
+### Batch Operations
 - `createManyRecords(records)` - Create multiple records (batch)
-- `deleteManyRecords(keysList)` - Delete multiple records (batch)
+- `fetchManyRecords(keysList)` - Fetch multiple records by their keys (batch)
 - `patchManyRecords(updates)` - Update multiple records
+- `deleteManyRecords(keysList)` - Delete multiple records (batch)
+
+### Query Operations
 - `fetchAllRecords(sk)` - Fetch all records by sort key
 - `createFetchAllRecords(index?, sk?)` - Create a reusable fetch function
 
@@ -162,7 +171,11 @@ npm run setup:db
 ### Run Tests
 
 ```bash
-npm test
+# Run individual test suites
+npm run test:create        # Test record creation
+npm run test:fetch         # Test record fetching
+npm run test:batch         # Test batch operations
+npm run test:fetch-many    # Test fetching multiple records
 ```
 
 ### Teardown Database
@@ -183,6 +196,14 @@ This creates:
 - `dist/esm/` - ES modules
 - `dist/cjs/` - CommonJS modules  
 - `dist/types/` - TypeScript declarations
+
+## Repository
+
+[GitHub - vitkuz/aws-dynamo-adapter](https://github.com/vitkuz/aws-dynamo-adapter)
+
+## Author
+
+Vitkuz
 
 ## License
 
