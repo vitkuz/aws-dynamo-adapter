@@ -28,14 +28,29 @@
     "format:check": "prettier --check \"src/**/*.{ts,tsx,json}\"",
     "lint": "npm run format:check"
   },
+  "files": [
+    "dist",
+    "src",
+    "README.md",
+    "example.ts",
+    "LICENSE"
+  ],
   "keywords": [
     "dynamodb",
     "adapter",
     "typescript",
     "aws"
   ],
-  "author": "",
+  "author": "Vitkuz",
   "license": "ISC",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/vitkuz/aws-dynamo-adapter.git"
+  },
+  "bugs": {
+    "url": "https://github.com/vitkuz/aws-dynamo-adapter/issues"
+  },
+  "homepage": "https://github.com/vitkuz/aws-dynamo-adapter#readme",
   "dependencies": {
     "@aws-sdk/client-dynamodb": "^3.873.0",
     "@aws-sdk/lib-dynamodb": "^3.873.0",
