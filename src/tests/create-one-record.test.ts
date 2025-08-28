@@ -6,7 +6,7 @@ const TABLE_NAME = process.env.TEST_TABLE_NAME || 'test-dynamodb-adapter';
 async function testCreateOneRecord() {
   console.log('Testing createOneRecord...');
 
-  const adapter = createAdapter<{ id: string; sk: string; name: string; price: number }>({
+  const adapter = createAdapter({
     tableName: TABLE_NAME,
   });
 
@@ -19,7 +19,7 @@ async function testCreateOneRecord() {
   };
 
   try {
-    const created = await adapter.createOneRecord(record);
+    const created = await adapter.createOneRecord<{ id: string; sk: string; name: string; price: number }>(record);
 
     // Validate results
     if (created.id !== testId) throw new Error(`ID mismatch: ${created.id} !== ${testId}`);
@@ -37,7 +37,7 @@ async function testCreateOneRecord() {
 
     // Fetch the record to verify it was actually saved
     console.log('Fetching record to verify using fetchOneRecord...');
-    const fetchedRecord = await adapter.fetchOneRecord({ id: testId, sk: 'products' });
+    const fetchedRecord = await adapter.fetchOneRecord<{ id: string; sk: string; name: string; price: number }>({ id: testId, sk: 'products' });
 
     if (!fetchedRecord) throw new Error('Record not found after creation');
     if (fetchedRecord.id !== testId)

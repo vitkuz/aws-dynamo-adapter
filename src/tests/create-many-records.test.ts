@@ -20,11 +20,11 @@ type Book = {
 async function testCreateManyRecords() {
   console.log('Testing createManyRecords with Authors and Books...');
 
-  const authorAdapter = createAdapter<Author>({
+  const authorAdapter = createAdapter({
     tableName: TABLE_NAME,
   });
 
-  const bookAdapter = createAdapter<Book>({
+  const bookAdapter = createAdapter({
     tableName: TABLE_NAME,
   });
 
@@ -78,7 +78,7 @@ async function testCreateManyRecords() {
 
   try {
     console.log('Creating authors batch...');
-    const createdAuthors = await authorAdapter.createManyRecords(authors);
+    const createdAuthors = await authorAdapter.createManyRecords<Author>(authors);
 
     if (createdAuthors.length !== 3)
       throw new Error(`Expected 3 authors, got ${createdAuthors.length}`);
@@ -107,7 +107,7 @@ async function testCreateManyRecords() {
     );
 
     console.log('Creating books batch...');
-    const createdBooks = await bookAdapter.createManyRecords(books);
+    const createdBooks = await bookAdapter.createManyRecords<Book>(books);
 
     if (createdBooks.length !== 3) throw new Error(`Expected 3 books, got ${createdBooks.length}`);
 
@@ -151,7 +151,7 @@ async function testCreateManyRecords() {
     console.log('✅ Author-book relationships verified');
 
     console.log('Fetching all authors to verify persistence...');
-    const fetchedAuthors = await authorAdapter.fetchAllRecords('authors');
+    const fetchedAuthors = await authorAdapter.fetchAllRecords<Author>('authors');
     const createdAuthorIds = new Set(authorIds);
     const foundAuthors = fetchedAuthors.filter((a) => createdAuthorIds.has(a.id));
 
@@ -160,7 +160,7 @@ async function testCreateManyRecords() {
     console.log('✅ All authors found in database');
 
     console.log('Fetching all books to verify persistence...');
-    const fetchedBooks = await bookAdapter.fetchAllRecords('books');
+    const fetchedBooks = await bookAdapter.fetchAllRecords<Book>('books');
     const createdBookIds = new Set(bookIds);
     const foundBooks = fetchedBooks.filter((b) => createdBookIds.has(b.id));
 
@@ -177,8 +177,8 @@ async function testCreateManyRecords() {
     console.log('✅ Cleanup completed');
 
     console.log('Verifying cleanup...');
-    const remainingAuthors = await authorAdapter.fetchAllRecords('authors');
-    const remainingBooks = await bookAdapter.fetchAllRecords('books');
+    const remainingAuthors = await authorAdapter.fetchAllRecords<Author>('authors');
+    const remainingBooks = await bookAdapter.fetchAllRecords<Book>('books');
 
     const foundRemainingAuthors = remainingAuthors.filter((a) => createdAuthorIds.has(a.id));
     const foundRemainingBooks = remainingBooks.filter((b) => createdBookIds.has(b.id));

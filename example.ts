@@ -13,8 +13,8 @@ interface Product {
 }
 
 async function example() {
-  // Create adapter with TypeScript generics
-  const adapter = createAdapter<Product>({
+  // Create adapter - generics are used at method level, not adapter level
+  const adapter = createAdapter({
     tableName: 'my-products-table',
     // Optional configuration
     // partitionKey: 'id',     // default
@@ -22,8 +22,8 @@ async function example() {
     // gsiName: 'gsiBySk',     // default
   });
 
-  // Create a product
-  const product = await adapter.createOneRecord({
+  // Create a product - specify type at method level
+  const product = await adapter.createOneRecord<Product>({
     id: 'prod-123',
     sk: 'products',
     name: 'Awesome Widget',
@@ -34,7 +34,7 @@ async function example() {
   // Output includes createdAt and updatedAt timestamps
 
   // Update product price
-  const updated = await adapter.patchOneRecord(
+  const updated = await adapter.patchOneRecord<Product>(
     { id: 'prod-123', sk: 'products' },
     { price: 34.99 }
   );
@@ -42,11 +42,11 @@ async function example() {
   // updatedAt timestamp is automatically updated
 
   // Fetch all products using GSI
-  const allProducts = await adapter.fetchAllRecords('products');
+  const allProducts = await adapter.fetchAllRecords<Product>('products');
   console.log('All products:', allProducts);
 
   // Create batch of products
-  const batchProducts = await adapter.createManyRecords([
+  const batchProducts = await adapter.createManyRecords<Product>([
     { id: 'prod-456', sk: 'products', name: 'Widget Pro', price: 49.99 },
     { id: 'prod-789', sk: 'products', name: 'Widget Ultra', price: 99.99 },
   ]);
