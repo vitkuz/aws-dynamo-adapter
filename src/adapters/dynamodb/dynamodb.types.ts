@@ -34,10 +34,6 @@ export interface DynamoDBAdapter {
     keysList: DynamoDBKey[]
   ) => Promise<(T & RecordWithTimestamps)[]>;
   fetchAllRecords: <T extends BaseRecord = BaseRecord>(sk: string) => Promise<T[]>;
-  createFetchAllRecords: <T extends BaseRecord = BaseRecord>(
-    index?: string,
-    sk?: string
-  ) => () => Promise<T[]>;
 }
 
 export interface DynamoDBClientDependencies {

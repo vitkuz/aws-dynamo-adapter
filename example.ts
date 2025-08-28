@@ -187,15 +187,12 @@ async function demonstrateAllMethods() {
     allUsers.map((u) => u.username)
   );
 
-  // 11. createFetchAllRecords - Create reusable fetch functions
-  console.log('11. Creating reusable fetch functions...');
-  const fetchAllProducts = adapter.createFetchAllRecords<Product>('gsiBySk', 'products');
-  const fetchAllUsers = adapter.createFetchAllRecords<User>('gsiBySk', 'users');
-
-  // Use the reusable functions
-  const productsAgain = await fetchAllProducts();
-  const usersAgain = await fetchAllUsers();
-  console.log('   Reusable fetchers work:', {
+  // 11. Using fetchAllRecords multiple times
+  console.log('11. Demonstrating reusability of fetchAllRecords...');
+  // You can easily reuse fetchAllRecords as needed
+  const productsAgain = await adapter.fetchAllRecords<Product>('products');
+  const usersAgain = await adapter.fetchAllRecords<User>('users');
+  console.log('   Fetched again:', {
     products: productsAgain.length,
     users: usersAgain.length,
   });
@@ -206,7 +203,7 @@ async function demonstrateAllMethods() {
 
   console.log('\n🧹 Cleanup Operations\n');
 
-  // 12. deleteOneRecord - Delete a single record
+  // deleteOneRecord - Delete a single record
   console.log('12. Deleting single product...');
   await adapter.deleteOneRecord({ id: productId, sk: 'products' });
   console.log('   Deleted product:', productId);

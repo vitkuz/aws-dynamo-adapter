@@ -283,18 +283,6 @@ const users = await adapter.fetchAllRecords<User>('users');
 // Handles pagination automatically
 ```
 
-#### `createFetchAllRecords<T>(index?, sk?)` - Create reusable query function
-```typescript
-// Create a reusable function for fetching products
-const fetchProducts = adapter.createFetchAllRecords<Product>(
-  'gsiBySk',  // optional: specify GSI name
-  'products'  // optional: specify sort key
-);
-
-// Use the function multiple times
-const allProducts = await fetchProducts();
-const productsAgain = await fetchProducts();
-```
 
 ### Working with Multiple Entity Types
 

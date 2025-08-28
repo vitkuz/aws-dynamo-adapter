@@ -13,7 +13,6 @@ import {
   createDeleteManyRecords,
   createPatchManyRecords,
   createFetchAllRecords,
-  createCreateFetchAllRecords,
 } from './operations';
 
 /**
@@ -58,6 +57,5 @@ export const createAdapter = (adapterConfig: DynamoDBAdapterConfig): DynamoDBAda
 
     // Query operations
     fetchAllRecords: createFetchAllRecords(config),
-    createFetchAllRecords: createCreateFetchAllRecords(config),
   };
 };
