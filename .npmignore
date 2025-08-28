@@ -1,0 +1,55 @@
+# Development and build files
+node_modules/
+scripts/
+.claude/
+.git/
+.gitignore
+.prettierrc.json
+.prettierignore
+
+# TypeScript config files (not needed by package users)
+tsconfig.json
+tsconfig.*.json
+
+# Test files (already in src/tests, but being explicit)
+src/tests/
+*.test.ts
+*.test.js
+
+# Build artifacts that shouldn't be published
+*.log
+npm-debug.log*
+.npm
+
+# IDE files
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+
+# OS files
+.DS_Store
+Thumbs.db
+
+# Documentation source files (keeping README.md and example.ts)
+improve.md
+CLAUDE.md
+
+# CI/CD
+.github/
+.travis.yml
+.circleci/
+
+# Environment files
+.env
+.env.*
+
+# Temporary files
+tmp/
+temp/
+*.tmp
+
+# Coverage reports
+coverage/
+.nyc_output/
