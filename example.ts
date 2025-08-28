@@ -245,6 +245,122 @@ async function demonstrateAllMethods() {
   console.log('\n✅ All operations demonstrated successfully!');
 }
 
+// Custom keys and GSI example
+async function demonstrateCustomKeysAndGSI() {
+  console.log('\n🔧 Custom Keys and GSI Configuration Example\n');
+
+  // Define a type with custom key names
+  interface Order {
+    orderId: string;        // Custom partition key
+    orderStatus: string;    // Custom sort key
+    customerId: string;
+    orderDate: string;
+    totalAmount: number;
+    items?: Array<{ sku: string; quantity: number; price: number }>;
+  }
+
+  // Create adapter with custom configuration
+  const orderAdapter = createAdapter({
+    tableName: 'orders-table',
+    partitionKey: 'orderId',      // Custom partition key (default is 'id')
+    sortKey: 'orderStatus',        // Custom sort key (default is 'sk')
+    gsiName: 'gsiByOrderStatus',  // Custom GSI name (default is 'gsiBySk')
+    // region: 'us-west-2',        // Optional: specify region
+  });
+
+  console.log('📦 Created adapter with custom keys:');
+  console.log('   - Partition key: orderId');
+  console.log('   - Sort key: orderStatus');
+  console.log('   - GSI name: gsiByOrderStatus\n');
+
+  // Create orders with custom keys
+  console.log('1. Creating orders with custom keys...');
+  const orderIds = [generateId(), generateId(), generateId()];
+  
+  const orders = await orderAdapter.createManyRecords<Order>([
+    {
+      orderId: orderIds[0],
+      orderStatus: 'pending',
+      customerId: 'cust-123',
+      orderDate: new Date().toISOString(),
+      totalAmount: 299.99,
+      items: [
+        { sku: 'WIDGET-001', quantity: 2, price: 99.99 },
+        { sku: 'GADGET-002', quantity: 1, price: 100.01 },
+      ],
+    },
+    {
+      orderId: orderIds[1],
+      orderStatus: 'shipped',
+      customerId: 'cust-456',
+      orderDate: new Date().toISOString(),
+      totalAmount: 149.99,
+      items: [{ sku: 'WIDGET-003', quantity: 1, price: 149.99 }],
+    },
+    {
+      orderId: orderIds[2],
+      orderStatus: 'delivered',
+      customerId: 'cust-789',
+      orderDate: new Date().toISOString(),
+      totalAmount: 89.99,
+      items: [{ sku: 'GADGET-004', quantity: 3, price: 29.99 }],
+    },
+  ]);
+
+  console.log('   Created', orders.length, 'orders');
+
+  // Fetch using custom keys
+  console.log('\n2. Fetching order using custom keys...');
+  const fetchedOrder = await orderAdapter.fetchOneRecord<Order>({
+    orderId: orderIds[0],
+    orderStatus: 'pending',
+  });
+  console.log('   Fetched order:', {
+    orderId: fetchedOrder?.orderId,
+    status: fetchedOrder?.orderStatus,
+    total: fetchedOrder?.totalAmount,
+  });
+
+  // Update using custom keys
+  console.log('\n3. Updating order status...');
+  const updatedOrder = await orderAdapter.patchOneRecord<Order>(
+    { orderId: orderIds[0], orderStatus: 'pending' },
+    { orderStatus: 'processing' } // Note: This would create a new item due to sort key change
+  );
+  console.log('   Updated order status to:', updatedOrder.orderStatus);
+
+  // Query using custom GSI
+  console.log('\n4. Querying all orders by status using custom GSI...');
+  const pendingOrders = await orderAdapter.fetchAllRecords<Order>('pending');
+  const shippedOrders = await orderAdapter.fetchAllRecords<Order>('shipped');
+  const deliveredOrders = await orderAdapter.fetchAllRecords<Order>('delivered');
+  
+  console.log('   Order counts by status:');
+  console.log('   - Pending:', pendingOrders.length);
+  console.log('   - Shipped:', shippedOrders.length);
+  console.log('   - Delivered:', deliveredOrders.length);
+
+  // Batch fetch with custom keys
+  console.log('\n5. Batch fetching orders with custom keys...');
+  const batchFetched = await orderAdapter.fetchManyRecords<Order>([
+    { orderId: orderIds[0], orderStatus: 'pending' },
+    { orderId: orderIds[1], orderStatus: 'shipped' },
+    { orderId: orderIds[2], orderStatus: 'delivered' },
+  ]);
+  console.log('   Fetched', batchFetched.length, 'orders in batch');
+
+  // Cleanup
+  console.log('\n6. Cleaning up test orders...');
+  await orderAdapter.deleteManyRecords([
+    { orderId: orderIds[0], orderStatus: 'pending' },
+    { orderId: orderIds[1], orderStatus: 'shipped' },
+    { orderId: orderIds[2], orderStatus: 'delivered' },
+  ]);
+  console.log('   Deleted all test orders');
+
+  console.log('\n✅ Custom keys and GSI example completed!');
+}
+
 // Error handling example
 async function demonstrateErrorHandling() {
   console.log('\n⚠️ Error Handling Example\n');
@@ -279,6 +395,7 @@ async function demonstrateErrorHandling() {
 async function runExamples() {
   try {
     await demonstrateAllMethods();
+    await demonstrateCustomKeysAndGSI();
     await demonstrateErrorHandling();
   } catch (error) {
     console.error('Example failed:', error);
@@ -291,4 +408,4 @@ if (require.main === module) {
   runExamples().catch(console.error);
 }
 
-export { demonstrateAllMethods, demonstrateErrorHandling };
+export { demonstrateAllMethods, demonstrateCustomKeysAndGSI, demonstrateErrorHandling };
