@@ -1,5 +1,5 @@
 {
-  "name": "@dynamodb/adapter",
+  "name": "@vitkuz/dynamodb-adapter",
   "version": "1.0.0",
   "description": "Type-safe DynamoDB adapter with configurable keys and comprehensive operations",
   "main": "dist/cjs/index.js",
@@ -18,7 +18,6 @@
     "build:cjs": "tsc -p tsconfig.cjs.json",
     "build:types": "tsc -p tsconfig.types.json",
     "clean": "rimraf dist",
-    "test": "tsx src/tests/integration.test.ts",
     "test:create": "tsx src/tests/create-one-record.test.ts",
     "test:fetch": "tsx src/tests/fetch-one-record.test.ts",
     "test:batch": "tsx src/tests/create-many-records.test.ts",

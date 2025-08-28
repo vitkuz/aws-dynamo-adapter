@@ -1,0 +1,1 @@
+- before creating pull request run prettier

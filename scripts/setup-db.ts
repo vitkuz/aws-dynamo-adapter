@@ -16,7 +16,7 @@ const client = new DynamoDBClient({});
 
 const setupDatabase = async (): Promise<void> => {
   console.log(`Setting up DynamoDB table: ${TABLE_NAME}`);
-  
+
   try {
     // Check if table already exists
     await client.send(new DescribeTableCommand({ TableName: TABLE_NAME }));
@@ -27,18 +27,18 @@ const setupDatabase = async (): Promise<void> => {
       throw error;
     }
   }
-  
+
   // Table doesn't exist, create it
   const attributeDefinitions: AttributeDefinition[] = [
     { AttributeName: PARTITION_KEY, AttributeType: 'S' },
     { AttributeName: SORT_KEY, AttributeType: 'S' },
   ];
-  
+
   const keySchema: KeySchemaElement[] = [
     { AttributeName: PARTITION_KEY, KeyType: 'HASH' },
     { AttributeName: SORT_KEY, KeyType: 'RANGE' },
   ];
-  
+
   const globalSecondaryIndexes: GlobalSecondaryIndex[] = [
     {
       IndexName: GSI_NAME,
@@ -49,7 +49,7 @@ const setupDatabase = async (): Promise<void> => {
       Projection: { ProjectionType: 'ALL' },
     },
   ];
-  
+
   try {
     await client.send(
       new CreateTableCommand({
@@ -60,22 +60,20 @@ const setupDatabase = async (): Promise<void> => {
         BillingMode: 'PAY_PER_REQUEST',
       })
     );
-    
+
     console.log(`Table ${TABLE_NAME} created successfully`);
-    
+
     // Wait for table to be active
     let tableActive = false;
     let attempts = 0;
     const maxAttempts = 60;
-    
+
     while (!tableActive && attempts < maxAttempts) {
-      await new Promise(resolve => setTimeout(resolve, 1000));
-      
+      await new Promise((resolve) => setTimeout(resolve, 1000));
+
       try {
-        const response = await client.send(
-          new DescribeTableCommand({ TableName: TABLE_NAME })
-        );
-        
+        const response = await client.send(new DescribeTableCommand({ TableName: TABLE_NAME }));
+
         if (response.Table?.TableStatus === 'ACTIVE') {
           tableActive = true;
           console.log(`Table ${TABLE_NAME} is now active`);
@@ -85,10 +83,10 @@ const setupDatabase = async (): Promise<void> => {
       } catch (error) {
         console.error('Error checking table status:', error);
       }
-      
+
       attempts++;
     }
-    
+
     if (!tableActive) {
       throw new Error(`Table ${TABLE_NAME} did not become active within ${maxAttempts} seconds`);
     }

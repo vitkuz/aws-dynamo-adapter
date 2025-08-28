@@ -18,7 +18,7 @@ async function example() {
     tableName: 'my-products-table',
     // Optional configuration
     // partitionKey: 'id',     // default
-    // sortKey: 'sk',          // default  
+    // sortKey: 'sk',          // default
     // gsiName: 'gsiBySk',     // default
   });
 
@@ -28,7 +28,7 @@ async function example() {
     sk: 'products',
     name: 'Awesome Widget',
     price: 29.99,
-    category: 'Electronics'
+    category: 'Electronics',
   });
   console.log('Created:', product);
   // Output includes createdAt and updatedAt timestamps
